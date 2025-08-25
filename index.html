@@ -414,14 +414,39 @@
         <input class="input" id="project-search" placeholder="Search projects" style="margin-bottom:8px" />
         <table class="table" id="project-table" role="table">
           <thead>
-            <tr><th>Project</th><th>Owner</th><th>Status</th><th>Due</th></tr>
+            <tr><th>Project</th><th>Owner</th><th>Status</th><th>Due</th><th></th></tr>
           </thead>
           <tbody>
-            <tr data-key="onboard" tabindex="0"><td contenteditable>Launch Onboarding Flow</td><td contenteditable>Nate</td><td contenteditable>In Progress</td><td contenteditable>2024-06-15</td></tr>
-            <tr data-key="blue" tabindex="0"><td contenteditable>Proposal for Blue Sky</td><td contenteditable>Priya</td><td contenteditable>Proposal Sent</td><td contenteditable>2024-06-20</td></tr>
-            <tr data-key="acme" tabindex="0"><td contenteditable>Kickoff – Acme Co.</td><td contenteditable>Jordan</td><td contenteditable>Planning</td><td contenteditable>2024-06-30</td></tr>
+            <tr data-key="onboard" tabindex="0">
+              <td contenteditable>Launch Onboarding Flow</td>
+              <td contenteditable>Nate</td>
+              <td contenteditable>In Progress</td>
+              <td contenteditable>2024-06-15</td>
+              <td><button class="btn link remove-project">Remove</button></td>
+            </tr>
+            <tr data-key="blue" tabindex="0">
+              <td contenteditable>Proposal for Blue Sky</td>
+              <td contenteditable>Priya</td>
+              <td contenteditable>Proposal Sent</td>
+              <td contenteditable>2024-06-20</td>
+              <td><button class="btn link remove-project">Remove</button></td>
+            </tr>
+            <tr data-key="acme" tabindex="0">
+              <td contenteditable>Kickoff – Acme Co.</td>
+              <td contenteditable>Jordan</td>
+              <td contenteditable>Planning</td>
+              <td contenteditable>2024-06-30</td>
+              <td><button class="btn link remove-project">Remove</button></td>
+            </tr>
           </tbody>
         </table>
+        <div class="add-task-row">
+          <input class="input" id="new-project-name" placeholder="Project name" style="flex:2" />
+          <input class="input" id="new-project-owner" placeholder="Owner" style="flex:1" />
+          <input class="input" id="new-project-status" placeholder="Status" style="flex:1" />
+          <input type="date" class="input" id="new-project-due" style="flex:1" />
+          <button class="btn" id="add-project">Add</button>
+        </div>
         <div id="project-detail" class="hidden"></div>
       </div>
       <div class="card" style="margin-top:16px;text-align:center">
@@ -1459,6 +1484,7 @@
     const projectSearch = document.getElementById('project-search');
     const projectTableBody = document.querySelector('#project-table tbody');
     const projectDetail = document.getElementById('project-detail');
+    const addProjectBtn = document.getElementById('add-project');
     const projectData = {
       onboard:{tasks:{todo:['Send welcome email'],progress:['Compile documents'],done:['Kickoff call']},prompts:['Draft onboarding checklist','Suggest welcome email text','Outline first-week tasks']},
       blue:{tasks:{todo:['Review requirements'],progress:['Write proposal'],done:['Initial consultation']},prompts:['Summarize client needs','Draft proposal outline','Plan follow-up steps']},
@@ -1488,13 +1514,39 @@
       projectSearch.addEventListener('input',()=>{
         const q=projectSearch.value.toLowerCase();
         [...projectTableBody.querySelectorAll('tr')].forEach(tr=>{
-          const match=[...tr.children].some(td=>td.textContent.toLowerCase().includes(q));
+          const cells=[...tr.querySelectorAll('td')].slice(0,4);
+          const match=cells.some(td=>td.textContent.toLowerCase().includes(q));
           tr.style.display=match?'':'none';
         });
       });
     }
+    if(addProjectBtn){
+      addProjectBtn.addEventListener('click',()=>{
+        const name=document.getElementById('new-project-name').value.trim();
+        const owner=document.getElementById('new-project-owner').value.trim();
+        const status=document.getElementById('new-project-status').value.trim();
+        const due=document.getElementById('new-project-due').value;
+        if(!name){alert('Project name required');return;}
+        const key=name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+Date.now();
+        const tr=document.createElement('tr');
+        tr.dataset.key=key;
+        tr.tabIndex=0;
+        tr.innerHTML=`<td contenteditable>${name}</td><td contenteditable>${owner}</td><td contenteditable>${status}</td><td contenteditable>${due}</td><td><button class="btn link remove-project">Remove</button></td>`;
+        projectTableBody.appendChild(tr);
+        ['new-project-name','new-project-owner','new-project-status','new-project-due'].forEach(id=>document.getElementById(id).value='');
+      });
+    }
     if(projectTableBody){
       projectTableBody.addEventListener('click',e=>{
+        if(e.target.classList.contains('remove-project')){
+          const row=e.target.closest('tr[data-key]');
+          if(row){
+            delete projectData[row.dataset.key];
+            if(currentProject===row.dataset.key){projectDetail.classList.add('hidden');currentProject=null;}
+            row.remove();
+          }
+          return;
+        }
         const row=e.target.closest('tr[data-key]');
         if(row){renderProject(row.dataset.key);}
       });
