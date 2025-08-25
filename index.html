@@ -457,7 +457,6 @@
           <input type="date" class="input" id="new-project-due" style="flex:1" />
           <button class="btn" id="add-project">Add</button>
         </div>
-        <div id="project-detail" class="hidden"></div>
       </div>
       <div class="card" style="margin-top:16px;text-align:center">
         <button class="btn" id="start-survey">🌱 Employee Wellness Survey</button>
@@ -565,6 +564,34 @@
           <textarea id="client-notes" class="input" placeholder="Notes" style="margin-top:6px"></textarea>
           <div class="linkrow" style="margin-top:10px;justify-content:center">
             <button class="btn secondary" id="client-close">Close</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROJECT DETAIL MODAL -->
+    <section id="project-modal" class="hidden" aria-hidden="true">
+      <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
+        <div class="card" style="max-width:400px">
+          <h3 id="project-title"></h3>
+          <p class="mini">Owner: <span id="project-owner"></span> • Status: <span id="project-status"></span></p>
+          <p class="mini">Due: <span id="project-due"></span></p>
+          <div class="grid grid-3 mini" style="margin:12px 0">
+            <div>
+              <h4>To Do</h4>
+              <ul id="project-todo"></ul>
+            </div>
+            <div>
+              <h4>In Progress</h4>
+              <ul id="project-progress"></ul>
+            </div>
+            <div>
+              <h4>Done</h4>
+              <ul id="project-done"></ul>
+            </div>
+          </div>
+          <div class="linkrow" style="justify-content:center;margin-top:10px">
+            <button class="btn secondary" id="project-close">Close</button>
           </div>
         </div>
       </div>
@@ -1518,36 +1545,39 @@
       openTaskDetails(taskEl);
     });
 
-    // Project table search and detail toggle
+    // Project table search and modal
     const projectSearch = document.getElementById('project-search');
     const projectTableBody = document.querySelector('#project-table tbody');
-    const projectDetail = document.getElementById('project-detail');
     const addProjectBtn = document.getElementById('add-project');
+    const projectModal = document.getElementById('project-modal');
+    const projectClose = document.getElementById('project-close');
+    const projectTitle = document.getElementById('project-title');
+    const projectOwner = document.getElementById('project-owner');
+    const projectStatus = document.getElementById('project-status');
+    const projectDue = document.getElementById('project-due');
+    const projectTodo = document.getElementById('project-todo');
+    const projectProgress = document.getElementById('project-progress');
+    const projectDone = document.getElementById('project-done');
+
     const projectData = {
       onboard:{tasks:{todo:['Send welcome email'],progress:['Compile documents'],done:['Kickoff call']},prompts:['Draft onboarding checklist','Suggest welcome email text','Outline first-week tasks']},
       blue:{tasks:{todo:['Review requirements'],progress:['Write proposal'],done:['Initial consultation']},prompts:['Summarize client needs','Draft proposal outline','Plan follow-up steps']},
       acme:{tasks:{todo:['Schedule kickoff'],progress:['Prepare agenda'],done:['Signed contract']},prompts:['Create kickoff agenda','Identify key stakeholders','Estimate project timeline']}
     };
-    let currentProject=null;
-    function renderProject(key){
-      const data = projectData[key];
-      if(!data){projectDetail.classList.add('hidden');currentProject=null;return;}
-      if(currentProject===key){projectDetail.classList.add('hidden');currentProject=null;return;}
-      currentProject=key;
-      projectDetail.innerHTML=`
-        <div class="kanban">
-          <div class="column"><h4>To Do</h4>${data.tasks.todo.map(t=>`<div class="task"><strong>${t}</strong></div>`).join('')}</div>
-          <div class="column"><h4>In Progress</h4>${data.tasks.progress.map(t=>`<div class="task"><strong>${t}</strong></div>`).join('')}</div>
-          <div class="column"><h4>Done</h4>${data.tasks.done.map(t=>`<div class="task"><strong>${t}</strong></div>`).join('')}</div>
-        </div>
-        <div class="assistant" style="margin-top:12px">
-          <div class="prompt">${data.prompts[0]}</div>
-          <div class="prompt">${data.prompts[1]}</div>
-          <div class="prompt">${data.prompts[2]}</div>
-        </div>
-      `;
-      projectDetail.classList.remove('hidden');
+
+    function openProjectModal(row){
+      const cells=[...row.children];
+      projectTitle.textContent=cells[0].textContent.trim();
+      projectOwner.textContent=cells[1].textContent.trim();
+      projectStatus.textContent=cells[2].textContent.trim();
+      projectDue.textContent=cells[3].textContent.trim();
+      const data=projectData[row.dataset.key]||{tasks:{todo:[],progress:[],done:[]}};
+      projectTodo.innerHTML=data.tasks.todo.map(t=>`<li>${t}</li>`).join('')||'<li class="muted">None</li>';
+      projectProgress.innerHTML=data.tasks.progress.map(t=>`<li>${t}</li>`).join('')||'<li class="muted">None</li>';
+      projectDone.innerHTML=data.tasks.done.map(t=>`<li>${t}</li>`).join('')||'<li class="muted">None</li>';
+      projectModal.classList.remove('hidden');
     }
+
     if(projectSearch){
       projectSearch.addEventListener('input',()=>{
         const q=projectSearch.value.toLowerCase();
@@ -1566,6 +1596,7 @@
         const due=document.getElementById('new-project-due').value;
         if(!name){alert('Project name required');return;}
         const key=name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+Date.now();
+        projectData[key]={tasks:{todo:[],progress:[],done:[]},prompts:[]};
         const tr=document.createElement('tr');
         tr.dataset.key=key;
         tr.tabIndex=0;
@@ -1580,21 +1611,24 @@
           const row=e.target.closest('tr[data-key]');
           if(row){
             delete projectData[row.dataset.key];
-            if(currentProject===row.dataset.key){projectDetail.classList.add('hidden');currentProject=null;}
             row.remove();
           }
           return;
         }
+      });
+      projectTableBody.addEventListener('dblclick',e=>{
         const row=e.target.closest('tr[data-key]');
-        if(row){renderProject(row.dataset.key);}
+        if(row){openProjectModal(row);}
       });
       projectTableBody.addEventListener('keydown',e=>{
         if(e.key==='Enter'){
           const row=e.target.closest('tr[data-key]');
-          if(row){renderProject(row.dataset.key);}
+          if(row){openProjectModal(row);}
         }
       });
     }
+    if(projectClose){ projectClose.addEventListener('click',()=>projectModal.classList.add('hidden')); }
+    if(projectModal){ projectModal.addEventListener('click',e=>{ if(e.target===projectModal.firstElementChild){ projectModal.classList.add('hidden'); } }); }
 
     // Done for the Day overlay
     const doneBtn = document.getElementById('done-day');
