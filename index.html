@@ -326,6 +326,16 @@
             </select>
             <button class="btn" id="add-template">Add</button>
           </div>
+          <div class="add-task-row" style="margin:8px 0">
+            <input class="input" id="custom-task-title" placeholder="Custom task title" style="flex:2" />
+            <input type="date" class="input" id="custom-task-due" style="flex:1" />
+            <select id="custom-task-status" class="input" style="flex:1">
+              <option value="todo">To Do</option>
+              <option value="progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+            <button class="btn" id="add-custom-task">Add Task</button>
+          </div>
           <div class="kanban">
             <div class="column" data-status="todo">
               <h4>To Do</h4>
@@ -878,6 +888,20 @@
           const due = new Date(); due.setDate(due.getDate()+7);
           addTask('todo', title, due.toISOString().split('T')[0]);
           templateSelect.value='';
+        });
+      }
+
+      const addCustomTaskBtn = document.getElementById('add-custom-task');
+      if(addCustomTaskBtn){
+        addCustomTaskBtn.addEventListener('click', ()=>{
+          const title = document.getElementById('custom-task-title').value.trim();
+          const due = document.getElementById('custom-task-due').value;
+          const status = document.getElementById('custom-task-status').value;
+          if(!title) return;
+          addTask(status, title, due);
+          document.getElementById('custom-task-title').value='';
+          document.getElementById('custom-task-due').value='';
+          document.getElementById('custom-task-status').value='todo';
         });
       }
 
