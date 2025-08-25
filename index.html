@@ -558,6 +558,10 @@
           <p class="mini">Address:</p>
           <div id="client-address" contenteditable class="input" style="margin-bottom:6px"></div>
           <p class="mini"><a id="client-map" href="#" target="_blank">View on map</a></p>
+          <p class="mini" style="margin-top:6px">Follow-up Date:</p>
+          <input type="date" id="client-followup" class="input" style="margin-bottom:6px" />
+          <p class="mini" style="margin-top:6px">Success Definition:</p>
+          <textarea id="client-success" class="input" placeholder="Define success" style="margin-top:6px"></textarea>
           <textarea id="client-notes" class="input" placeholder="Notes" style="margin-top:6px"></textarea>
           <div class="linkrow" style="margin-top:10px;justify-content:center">
             <button class="btn secondary" id="client-close">Close</button>
@@ -686,6 +690,7 @@
         tr.innerHTML=`<td contenteditable>${name}</td><td contenteditable>${comp}</td><td contenteditable>${email}</td><td contenteditable>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
         clientTable.appendChild(tr);
         addToPipeline(name, comp, stage);
+        openClientModal(tr);
         ['new-name','new-company','new-email','new-phone','new-owner'].forEach(id=>document.getElementById(id).value='');
       });
     }
@@ -784,13 +789,13 @@
       const clientOwner = document.getElementById('client-owner');
       const clientAddress = document.getElementById('client-address');
       const clientNotes = document.getElementById('client-notes');
+      const clientFollowup = document.getElementById('client-followup');
+      const clientSuccess = document.getElementById('client-success');
       const clientMap = document.getElementById('client-map');
       let currentClientRow = null;
-      clientTable.addEventListener('click', e=>{
-        const nameCell = e.target.closest('.client-name');
-        if(!nameCell) return;
-        currentClientRow = nameCell.parentElement;
-        const cells = currentClientRow.children;
+      function openClientModal(row){
+        currentClientRow = row;
+        const cells = row.children;
         clientNameEl.textContent = cells[0].textContent.trim();
         clientCompany.textContent = cells[1].textContent.trim();
         const email = cells[2].textContent.trim();
@@ -798,10 +803,17 @@
         clientPhone.textContent = cells[3].textContent.trim();
         clientStage.textContent = cells[4].querySelector('select').value;
         clientOwner.textContent = cells[5].textContent.trim();
-        clientAddress.textContent = currentClientRow.dataset.address || '';
-        clientNotes.value = currentClientRow.dataset.notes || '';
+        clientAddress.textContent = row.dataset.address || '';
+        clientNotes.value = row.dataset.notes || '';
+        clientFollowup.value = row.dataset.followup || '';
+        clientSuccess.value = row.dataset.success || '';
         clientMap.href = 'https://www.google.com/maps?q='+encodeURIComponent(clientAddress.textContent.trim());
         clientModal.classList.remove('hidden');
+      }
+      clientTable.addEventListener('dblclick', e=>{
+        const row = e.target.closest('tr');
+        if(!row) return;
+        openClientModal(row);
       });
       clientAddress.addEventListener('blur',()=>{
         clientMap.href = 'https://www.google.com/maps?q='+encodeURIComponent(clientAddress.textContent.trim());
@@ -810,6 +822,8 @@
         if(!currentClientRow) return;
         currentClientRow.dataset.address = clientAddress.textContent.trim();
         currentClientRow.dataset.notes = clientNotes.value.trim();
+        currentClientRow.dataset.followup = clientFollowup.value;
+        currentClientRow.dataset.success = clientSuccess.value.trim();
       }
       if(clientClose){ clientClose.addEventListener('click',()=>{ saveClientDetails(); clientModal.classList.add('hidden'); }); }
       if(clientModal){ clientModal.addEventListener('click', e=>{ if(e.target===clientModal.firstElementChild){ saveClientDetails(); clientModal.classList.add('hidden'); } }); }
