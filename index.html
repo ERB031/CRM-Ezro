@@ -59,7 +59,11 @@
     .column{background:var(--bg-alt);border:1px dashed var(--border);border-radius:12px;padding:10px;min-width:300px}
     .column h4{margin:0 0 8px 0}
     .task{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px}
-    .subtask{display:flex;align-items:center;gap:8px;margin:6px 0}
+    .subtask{display:flex;flex-direction:column;gap:6px;margin:8px 0;padding:8px;border:1px solid var(--border);border-radius:8px;background:#fff}
+    .subtask-head{display:flex;align-items:center;gap:6px}
+    .subtask-actions{display:flex;gap:6px}
+    .subtask input,.subtask select,.subtask textarea{width:100%}
+    .subtask textarea{min-height:40px;resize:vertical}
     .assistant{background:linear-gradient(180deg,#efe8ff,#fff);border:1px solid var(--border);border-radius:14px;padding:12px}
     .prompt{display:block;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0}
     .prompt:hover{background:var(--purple-100)}
@@ -79,6 +83,14 @@
     .task.checked .task-title{text-decoration:line-through;color:var(--muted)}
     .notice{background:#f6f3ff;border:1px solid var(--border);padding:10px;border-radius:10px}
     .add-task-row{display:flex;gap:6px;margin-top:8px}
+    .task-col{padding:8px;border-radius:8px;border:1px solid var(--border)}
+    .task-col.todo{border-color:var(--warning);background:#f59e0b1a}
+    .task-col.todo h4{color:var(--warning)}
+    .task-col.progress{border-color:var(--purple);background:#6b46c11a}
+    .task-col.progress h4{color:var(--purple)}
+    .task-col.done{border-color:var(--success);background:#16a34a1a}
+    .task-col.done h4{color:var(--success)}
+    .task-col ul{list-style:none;margin:0;padding:0;max-height:200px;overflow-y:auto}
     #chart-tooltip{position:fixed;pointer-events:none;background:#fff;border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:12px;box-shadow:0 2px 4px rgba(17,12,34,.08);display:none}
     footer{padding:30px 20px;color:var(--muted);text-align:center}
     /* Sim.ai chat widget styles */
@@ -125,6 +137,7 @@
       cursor:pointer;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 <body>
   <header>
@@ -132,6 +145,7 @@
       <div class="brand"><div class="brand-logo" aria-label="Logo">∑</div> CRM/PM/AI MVP</div>
       <nav id="nav"></nav>
       <input type="search" id="global-search" class="search" placeholder="Search..." aria-label="Global search" />
+      <button id="help-btn" class="btn link" aria-label="Help">❔</button>
     </div>
   </header>
 
@@ -161,6 +175,26 @@
             <a class="cta" data-nav="#page-calendar"><span class="badge">Calendar</span><strong>Schedule</strong><span class="mini muted">Google Calendar link</span></a>
           </div>
         </div>
+      </div>
+      <div class="grid grid-2" style="margin-top:16px">
+        <div class="card">
+          <div class="kpi">
+            <h3>Revenue Generated</h3>
+            <p id="kpi-revenue">$3760</p>
+          </div>
+          <canvas id="revenue-chart" width="320" height="120" class="chart" aria-label="Revenue bar chart"></canvas>
+        </div>
+        <div class="card">
+          <div class="kpi">
+            <h3>Time Saved</h3>
+            <p id="kpi-time">22 Hrs</p>
+          </div>
+          <canvas id="time-chart" width="320" height="120" class="chart" aria-label="Time saved line chart"></canvas>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Today's Tasks</h3>
+        <ul id="today-task-list"></ul>
       </div>
     </section>
 
@@ -238,15 +272,15 @@
                 <tr><th>Company</th><th>Industry</th><th>Website</th><th>Stage</th><th>Owner</th></tr>
               </thead>
               <tbody>
-                <tr>
-                  <td contenteditable>Zenith Group</td>
+                  <tr id="company-zenith">
+                    <td contenteditable>Zenith Group</td>
                   <td contenteditable>Finance</td>
                   <td contenteditable>zenithgrp.com</td>
                   <td data-stage><select class="input stage-select"><option>Lead</option><option>Discovery</option><option selected>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
                   <td contenteditable>Nate</td>
                 </tr>
-                <tr>
-                  <td contenteditable>Blue Sky Studio</td>
+                  <tr id="company-blue">
+                    <td contenteditable>Blue Sky Studio</td>
                   <td contenteditable>Design</td>
                   <td contenteditable>blueskystudio.io</td>
                   <td data-stage><select class="input stage-select"><option selected>Lead</option><option>Discovery</option><option>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
@@ -278,15 +312,15 @@
         <div class="grid grid-3" id="pipeline">
           <div class="column" data-stage="Lead">
             <h4>Lead</h4>
-            <div class="task" draggable="true">Alex Rivera – Zenith Group</div>
+            <div class="task" draggable="true">Alex Rivera – Zenith Group<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-alex" data-tab="crm-clients">Profile</a></div></div>
           </div>
           <div class="column" data-stage="Proposal">
             <h4>Proposal</h4>
-            <div class="task" draggable="true">Priya Shah – Blue Sky Studio</div>
+            <div class="task" draggable="true">Priya Shah – Blue Sky Studio<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-priya" data-tab="crm-clients">Profile</a></div></div>
           </div>
           <div class="column" data-stage="Won">
             <h4>Won</h4>
-            <div class="task" draggable="true">Jordan Lee – Acme Co.</div>
+            <div class="task" draggable="true">Jordan Lee – Acme Co.<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-acme" data-tab="crm-clients">Profile</a></div></div>
           </div>
         </div>
       </div>
@@ -305,6 +339,16 @@
               <option>Weekly status update</option>
             </select>
             <button class="btn" id="add-template">Add</button>
+          </div>
+          <div class="add-task-row" style="margin:8px 0">
+            <input class="input" id="custom-task-title" placeholder="Custom task title" style="flex:2" />
+            <input type="date" class="input" id="custom-task-due" style="flex:1" />
+            <select id="custom-task-status" class="input" style="flex:1">
+              <option value="todo">To Do</option>
+              <option value="progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+            <button class="btn" id="add-custom-task">Add Task</button>
           </div>
           <div class="kanban">
             <div class="column" data-status="todo">
@@ -350,9 +394,52 @@
           </div>
         </div>
       </div>
-      <div class="card" style="margin-top:16px">
-        <h3>Workflow Progress</h3>
-        <canvas id="workflow-chart" width="640" height="180" class="chart"></canvas>
+      <div class="card" id="projects-card" style="margin-top:16px">
+        <h3>All Active Projects</h3>
+        <input class="input" id="project-search" placeholder="Search projects" style="margin-bottom:8px" />
+        <table class="table" id="project-table" role="table">
+          <thead>
+            <tr><th>Project</th><th>Client</th><th>Company</th><th>Owner</th><th>Status</th><th>Due</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr data-key="onboard" tabindex="0">
+              <td contenteditable>Launch Onboarding Flow</td>
+              <td><select class="input project-client"></select></td>
+              <td><select class="input project-company"></select></td>
+              <td contenteditable>Nate</td>
+              <td contenteditable>In Progress</td>
+              <td contenteditable>2024-06-15</td>
+              <td><button class="btn link remove-project">Remove</button></td>
+            </tr>
+            <tr data-key="blue" tabindex="0">
+              <td contenteditable>Proposal for Blue Sky</td>
+              <td><select class="input project-client"></select></td>
+              <td><select class="input project-company"></select></td>
+              <td contenteditable>Priya</td>
+              <td contenteditable>Proposal Sent</td>
+              <td contenteditable>2024-06-20</td>
+              <td><button class="btn link remove-project">Remove</button></td>
+            </tr>
+            <tr data-key="acme" tabindex="0">
+              <td contenteditable>Kickoff – Acme Co.</td>
+              <td><select class="input project-client"></select></td>
+              <td><select class="input project-company"></select></td>
+              <td contenteditable>Jordan</td>
+              <td contenteditable>Planning</td>
+              <td contenteditable>2024-06-30</td>
+              <td><button class="btn link remove-project">Remove</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="add-task-row">
+          <input class="input" id="new-project-name" placeholder="Project name" style="flex:2" />
+          <select class="input" id="new-project-client" style="flex:1"></select>
+          <select class="input" id="new-project-company" style="flex:1"></select>
+          <input class="input" id="new-project-owner" placeholder="Owner" style="flex:1" />
+          <input class="input" id="new-project-status" placeholder="Status" style="flex:1" />
+          <input type="date" class="input" id="new-project-due" style="flex:1" />
+          <button class="btn" id="add-project">Add</button>
+        </div>
       </div>
     </section>
 
@@ -389,21 +476,6 @@
           <p class="mini muted">This is a visual demo; logging won’t persist beyond this session.</p>
         </div>
       </div>
-      <div class="card" id="projects-card" style="margin-top:16px">
-        <h3>All Active Projects</h3>
-        <input class="input" id="project-search" placeholder="Search projects" style="margin-bottom:8px" />
-        <table class="table" id="project-table" role="table">
-          <thead>
-            <tr><th>Project</th><th>Owner</th><th>Status</th><th>Due</th></tr>
-          </thead>
-          <tbody>
-            <tr data-key="onboard" tabindex="0"><td contenteditable>Launch Onboarding Flow</td><td contenteditable>Nate</td><td contenteditable>In Progress</td><td contenteditable>2024-06-15</td></tr>
-            <tr data-key="blue" tabindex="0"><td contenteditable>Proposal for Blue Sky</td><td contenteditable>Priya</td><td contenteditable>Proposal Sent</td><td contenteditable>2024-06-20</td></tr>
-            <tr data-key="acme" tabindex="0"><td contenteditable>Kickoff – Acme Co.</td><td contenteditable>Jordan</td><td contenteditable>Planning</td><td contenteditable>2024-06-30</td></tr>
-          </tbody>
-        </table>
-        <div id="project-detail" class="hidden"></div>
-      </div>
       <div class="card" style="margin-top:16px;text-align:center">
         <button class="btn" id="start-survey">🌱 Employee Wellness Survey</button>
         <p class="mini" style="margin-top:8px"><a href="https://www.youtube.com/watch?v=EBxV9YDEtAk" target="_blank" rel="noopener">Try this office stretch</a></p>
@@ -425,6 +497,10 @@
           <canvas id="completed-chart" width="320" height="180" class="chart"></canvas>
           <ul id="completed-list" class="mini"></ul>
         </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Workflow Progress</h3>
+        <canvas id="workflow-chart" width="640" height="180" class="chart"></canvas>
       </div>
       <div class="card" style="margin-top:16px">
         <h3>Workload Balance</h3>
@@ -481,9 +557,13 @@
       <section id="task-modal" class="hidden" aria-hidden="true">
       <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
         <div class="card" style="max-width:360px;text-align:center">
-          <h3 id="modal-title"></h3>
+          <input id="modal-title" class="input" placeholder="Task title" style="margin-bottom:8px" />
           <p class="mini" style="margin-bottom:4px">Due:</p>
           <input type="datetime-local" id="modal-due" class="input" style="margin-bottom:8px" />
+          <p class="mini" id="modal-team-label" style="margin-bottom:4px;display:none">Assign to team member:</p>
+          <select id="modal-team" class="input" style="margin-bottom:8px;display:none"></select>
+          <p class="mini" id="modal-client-label" style="margin-bottom:4px;display:none">Assign to client:</p>
+          <select id="modal-client" class="input" style="margin-bottom:8px;display:none"></select>
           <textarea id="modal-note" class="input" placeholder="Add notes" style="margin:8px 0"></textarea>
           <div id="modal-contact" class="mini" style="margin-bottom:8px"></div>
           <button class="btn secondary" id="modal-close">Close</button>
@@ -494,18 +574,113 @@
     <!-- CLIENT DETAIL MODAL -->
     <section id="client-modal" class="hidden" aria-hidden="true">
       <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
-        <div class="card" style="max-width:400px">
-          <h3 id="client-name"></h3>
-          <p class="mini" id="client-company"></p>
-          <p class="mini" id="client-email"></p>
-          <p class="mini" id="client-phone"></p>
-          <p class="mini">Stage: <span id="client-stage"></span> • Owner: <span id="client-owner"></span></p>
-          <p class="mini">Address:</p>
-          <div id="client-address" contenteditable class="input" style="margin-bottom:6px"></div>
-          <p class="mini"><a id="client-map" href="#" target="_blank">View on map</a></p>
-          <textarea id="client-notes" class="input" placeholder="Notes" style="margin-top:6px"></textarea>
-          <div class="linkrow" style="margin-top:10px;justify-content:center">
+        <div style="background:var(--bg);padding:20px;border-radius:14px;max-width:900px;width:90%;max-height:90vh;overflow:auto">
+          <h2>Person Profile</h2>
+          <p class="mini muted">Details about this person and how they interact with the org, plus which orientations and trainings and any events they were involved in.</p>
+          <div class="grid" style="grid-template-columns:2fr 1fr;gap:16px">
+            <div class="card">
+              <div class="kpi" style="justify-content:space-between">
+                <h3>Details</h3>
+                <div class="linkrow">
+                  <button class="btn link" id="client-download">Download</button>
+                  <button class="btn link" id="client-edit">Edit</button>
+                </div>
+              </div>
+              <p><strong id="client-name"></strong></p>
+              <p class="mini" id="client-company"></p>
+              <p class="mini" id="client-email"></p>
+              <p class="mini" id="client-phone"></p>
+              <p class="mini">Stage: <span id="client-stage"></span> • Owner: <span id="client-owner"></span></p>
+              <p class="mini">Address:</p>
+              <div id="client-address" contenteditable class="input" style="margin-bottom:6px"></div>
+              <p class="mini"><a id="client-map" href="#" target="_blank">View on map</a></p>
+              <p class="mini" style="margin-top:6px">Follow-up Date:</p>
+              <input type="date" id="client-followup" class="input" style="margin-bottom:6px" />
+              <p class="mini" style="margin-top:6px">Success Definition:</p>
+              <textarea id="client-success" class="input" placeholder="Define success"></textarea>
+              <textarea id="client-notes" class="input" placeholder="Notes" style="margin-top:6px"></textarea>
+            </div>
+            <div class="grid" style="gap:16px">
+              <div class="card">
+                <h3>Metrics</h3>
+                <ul id="client-metrics" class="mini"></ul>
+                <div class="add-task-row">
+                  <input id="metric-name" class="input" placeholder="Metric" />
+                  <input id="metric-value" class="input" placeholder="Value" />
+                  <button class="btn" id="add-metric">Add</button>
+                </div>
+              </div>
+              <div class="card">
+                <h3>Highlights & Alerts</h3>
+                <ul id="client-highlights" class="mini"></ul>
+                <div class="add-task-row">
+                  <input id="highlight-text" class="input" placeholder="Add highlight" />
+                  <button class="btn" id="add-highlight">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px">
+            <div class="card">
+              <h3>Orientations & Trainings</h3>
+              <ul id="client-trainings" class="mini"></ul>
+              <div class="add-task-row">
+                <input id="training-text" class="input" placeholder="Add training" />
+                <button class="btn" id="add-training">Add</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Associated Events</h3>
+              <ul id="client-events" class="mini"></ul>
+              <div class="add-task-row">
+                <input id="event-text" class="input" placeholder="Add event" />
+                <button class="btn" id="add-event">Add</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Workflow List</h3>
+              <ul id="client-workflows" class="mini"></ul>
+              <div class="add-task-row">
+                <input id="workflow-text" class="input" placeholder="Add workflow" />
+                <button class="btn" id="add-workflow">Add</button>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <h3>Document Center</h3>
+            <ul id="client-files" class="mini"></ul>
+            <input type="file" id="file-upload" multiple class="input" style="margin-top:6px" />
+          </div>
+          <div class="linkrow" style="margin-top:16px;justify-content:center">
             <button class="btn secondary" id="client-close">Close</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROJECT DETAIL MODAL -->
+    <section id="project-modal" class="hidden" aria-hidden="true">
+      <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
+        <div class="card" style="max-width:600px;width:90%">
+          <h3 id="project-title"></h3>
+          <p class="mini">Owner: <span id="project-owner"></span> • Status: <span id="project-status"></span></p>
+          <p class="mini">Due: <span id="project-due"></span></p>
+          <div class="grid grid-3 mini" style="margin:12px 0">
+            <div class="task-col todo">
+              <h4>To Do</h4>
+              <ul id="project-todo" data-status="todo"></ul>
+            </div>
+            <div class="task-col progress">
+              <h4>In Progress</h4>
+              <ul id="project-progress" data-status="progress"></ul>
+            </div>
+            <div class="task-col done">
+              <h4>Done</h4>
+              <ul id="project-done" data-status="done"></ul>
+            </div>
+          </div>
+          <div class="linkrow" style="justify-content:center;margin-top:10px">
+            <button class="btn secondary" id="project-close">Close</button>
           </div>
         </div>
       </div>
@@ -551,6 +726,9 @@
       });
     }
 
+    const helpBtn = document.getElementById('help-btn');
+    if(helpBtn){ helpBtn.addEventListener('click',()=>alert('Help is coming soon (demo)')); }
+
     function showPage(hash){
       document.querySelectorAll('.page').forEach(el=>el.classList.add('hidden'));
       const target = document.querySelector(hash || '#page-cover');
@@ -566,6 +744,8 @@
       if(navTo){ e.preventDefault(); showPage(navTo.dataset.nav); }
       const crmLink = e.target.closest('.crm-link');
       if(crmLink){ e.preventDefault(); showPage('#page-crm');
+        const tab = crmLink.dataset.tab;
+        if(tab){ const btn=document.querySelector(`.crm-tab[data-target="${tab}"]`); if(btn) btn.click(); }
         const rowId = crmLink.dataset.target;
         const row = document.getElementById(rowId);
         if(row){ row.scrollIntoView({behavior:'smooth', block:'center'}); row.style.outline='2px solid var(--purple)'; setTimeout(()=>row.style.outline='none', 1800); }
@@ -603,19 +783,7 @@
         col.appendChild(div);
       }
     }
-    // click to advance pipeline stage
-    if(pipelineBoard){
-      pipelineBoard.addEventListener('click',e=>{
-        const card=e.target.closest('.task');
-        if(!card) return;
-        const stages=['Lead','Proposal','Won'];
-        const current=card.parentElement.dataset.stage;
-        let idx=stages.indexOf(current);
-        idx=(idx+1)%stages.length;
-        const nextCol=pipelineBoard.querySelector(`.column[data-stage='${stages[idx]}']`);
-        if(nextCol) nextCol.appendChild(card);
-      });
-    }
+    // Pipeline cards no longer advance stages on click; movement occurs through drag and drop only
 
     // Clients table
     const addClientBtn = document.getElementById('add-client');
@@ -628,9 +796,11 @@
         const name=getVal('new-name'); const comp=getVal('new-company'); const email=getVal('new-email'); const phone=getVal('new-phone'); const stage=getVal('new-stage'); const owner=getVal('new-owner');
         if(!name||!comp){ alert('Name and Company are required.'); return; }
         const tr=document.createElement('tr');
-        tr.innerHTML=`<td contenteditable>${name}</td><td contenteditable>${comp}</td><td contenteditable>${email}</td><td contenteditable>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
+        tr.id = 'client-'+Date.now();
+        tr.innerHTML=`<td contenteditable class="client-name">${name}</td><td contenteditable>${comp}</td><td contenteditable>${email}</td><td contenteditable>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
         clientTable.appendChild(tr);
         addToPipeline(name, comp, stage);
+        openClientModal(tr);
         ['new-name','new-company','new-email','new-phone','new-owner'].forEach(id=>document.getElementById(id).value='');
       });
     }
@@ -662,6 +832,7 @@
           clientTable.innerHTML='';
           rows.forEach(cols=>{
             const tr=document.createElement('tr');
+            tr.id = 'client-'+Math.random().toString(36).slice(2,9);
             tr.innerHTML = cols.map((v,i)=> i===4? `<td data-stage>${stageDropdown(v)}</td>` : `<td contenteditable>${v}</td>`).join('');
             clientTable.appendChild(tr);
           });
@@ -679,6 +850,7 @@
         const name=getVal('new-comp-name'); const industry=getVal('new-comp-industry'); const site=getVal('new-comp-website'); const stage=getVal('new-comp-stage'); const owner=getVal('new-comp-owner');
         if(!name){ alert('Company name required'); return; }
         const tr=document.createElement('tr');
+        tr.id = 'company-'+Date.now();
         tr.innerHTML=`<td contenteditable>${name}</td><td contenteditable>${industry}</td><td contenteditable>${site}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
         companyTable.appendChild(tr);
         ['new-comp-name','new-comp-industry','new-comp-website','new-comp-owner'].forEach(id=>document.getElementById(id).value='');
@@ -711,6 +883,7 @@
           companyTable.innerHTML='';
           rows.forEach(cols=>{
             const tr=document.createElement('tr');
+            tr.id = 'company-'+Math.random().toString(36).slice(2,9);
             tr.innerHTML = cols.map((v,i)=> i===3? `<td data-stage>${stageDropdown(v)}</td>` : `<td contenteditable>${v}</td>`).join('');
             companyTable.appendChild(tr);
           });
@@ -718,9 +891,16 @@
       }
     }
 
+    const teamMembers = [
+      {id:'team-nate', name:'Nate'},
+      {id:'team-priya', name:'Priya'},
+      {id:'team-jordan', name:'Jordan'}
+    ];
+
       // CRM detail modal
       const clientModal = document.getElementById('client-modal');
       const clientClose = document.getElementById('client-close');
+      const clientDownload = document.getElementById('client-download');
       const clientNameEl = document.getElementById('client-name');
       const clientCompany = document.getElementById('client-company');
       const clientEmail = document.getElementById('client-email');
@@ -729,24 +909,117 @@
       const clientOwner = document.getElementById('client-owner');
       const clientAddress = document.getElementById('client-address');
       const clientNotes = document.getElementById('client-notes');
+      const clientFollowup = document.getElementById('client-followup');
+      const clientSuccess = document.getElementById('client-success');
       const clientMap = document.getElementById('client-map');
+      const clientMetrics = document.getElementById('client-metrics');
+      const metricName = document.getElementById('metric-name');
+      const metricValue = document.getElementById('metric-value');
+      const addMetricBtn = document.getElementById('add-metric');
+      const clientHighlights = document.getElementById('client-highlights');
+      const highlightText = document.getElementById('highlight-text');
+      const addHighlightBtn = document.getElementById('add-highlight');
+      const clientTrainings = document.getElementById('client-trainings');
+      const trainingText = document.getElementById('training-text');
+      const addTrainingBtn = document.getElementById('add-training');
+      const clientEvents = document.getElementById('client-events');
+      const eventText = document.getElementById('event-text');
+      const addEventBtn = document.getElementById('add-event');
+      const clientWorkflows = document.getElementById('client-workflows');
+      const workflowText = document.getElementById('workflow-text');
+      const addWorkflowBtn = document.getElementById('add-workflow');
+      const clientFiles = document.getElementById('client-files');
+      const fileUpload = document.getElementById('file-upload');
       let currentClientRow = null;
-      clientTable.addEventListener('click', e=>{
-        const nameCell = e.target.closest('.client-name');
-        if(!nameCell) return;
-        currentClientRow = nameCell.parentElement;
-        const cells = currentClientRow.children;
-        clientNameEl.textContent = cells[0].textContent.trim();
-        clientCompany.textContent = cells[1].textContent.trim();
-        const email = cells[2].textContent.trim();
-        clientEmail.innerHTML = `<a href="mailto:${email}">${email}</a>`;
-        clientPhone.textContent = cells[3].textContent.trim();
-        clientStage.textContent = cells[4].querySelector('select').value;
-        clientOwner.textContent = cells[5].textContent.trim();
-        clientAddress.textContent = currentClientRow.dataset.address || '';
-        clientNotes.value = currentClientRow.dataset.notes || '';
+      let currentMetrics = [], currentHighlights = [], currentTrainings = [], currentEvents = [], currentWorkflows = [], currentFiles = [];
+
+      function renderMetrics(){
+        if(!clientMetrics) return;
+        clientMetrics.innerHTML = '';
+        if(!currentMetrics.length){ clientMetrics.innerHTML = '<li class="mini">No metrics</li>'; return; }
+        currentMetrics.forEach((m,i)=>{
+          const li=document.createElement('li');
+          li.textContent = `${m.name}: ${m.value}`;
+          li.addEventListener('click',()=>{ currentMetrics.splice(i,1); renderMetrics(); });
+          clientMetrics.appendChild(li);
+        });
+      }
+      function renderList(arr, listEl, empty){
+        if(!listEl) return;
+        listEl.innerHTML = '';
+        if(!arr.length){ listEl.innerHTML = `<li class=\"mini\">${empty}</li>`; return; }
+        arr.forEach((txt,i)=>{
+          const li=document.createElement('li');
+          li.textContent = txt;
+          li.addEventListener('click',()=>{ arr.splice(i,1); renderList(arr,listEl,empty); });
+          listEl.appendChild(li);
+        });
+      }
+      const renderHighlights = ()=>renderList(currentHighlights, clientHighlights, 'None');
+      const renderTrainings = ()=>renderList(currentTrainings, clientTrainings, 'No trainings');
+      const renderEvents = ()=>renderList(currentEvents, clientEvents, 'No events');
+      const renderWorkflows = ()=>renderList(currentWorkflows, clientWorkflows, 'No workflows');
+      function renderFiles(){
+        if(!clientFiles) return;
+        clientFiles.innerHTML='';
+        if(!currentFiles.length){ clientFiles.innerHTML='<li class="mini">No files uploaded</li>'; return; }
+        currentFiles.forEach((f,i)=>{
+          const li=document.createElement('li');
+          li.textContent=f;
+          li.addEventListener('click',()=>{ currentFiles.splice(i,1); renderFiles(); });
+          clientFiles.appendChild(li);
+        });
+      }
+
+      if(addMetricBtn){ addMetricBtn.addEventListener('click',()=>{ const n=metricName.value.trim(); const v=metricValue.value.trim(); if(!n||!v) return; currentMetrics.push({name:n,value:v}); metricName.value=''; metricValue.value=''; renderMetrics(); }); }
+      if(addHighlightBtn){ addHighlightBtn.addEventListener('click',()=>{ const t=highlightText.value.trim(); if(!t) return; currentHighlights.push(t); highlightText.value=''; renderHighlights(); }); }
+      if(addTrainingBtn){ addTrainingBtn.addEventListener('click',()=>{ const t=trainingText.value.trim(); if(!t) return; currentTrainings.push(t); trainingText.value=''; renderTrainings(); }); }
+      if(addEventBtn){ addEventBtn.addEventListener('click',()=>{ const t=eventText.value.trim(); if(!t) return; currentEvents.push(t); eventText.value=''; renderEvents(); }); }
+      if(addWorkflowBtn){ addWorkflowBtn.addEventListener('click',()=>{ const t=workflowText.value.trim(); if(!t) return; currentWorkflows.push(t); workflowText.value=''; renderWorkflows(); }); }
+      if(fileUpload){ fileUpload.addEventListener('change',()=>{ [...fileUpload.files].forEach(f=>currentFiles.push(f.name)); fileUpload.value=''; renderFiles(); }); }
+      function openClientModal(row, isCompany=false){
+        currentClientRow = row;
+        const cells = row.children;
+        if(isCompany){
+          clientNameEl.textContent = cells[0].textContent.trim();
+          clientCompany.textContent = `Industry: ${cells[1].textContent.trim()}`;
+          const site = cells[2].textContent.trim();
+          clientEmail.innerHTML = `<a href="http://${site}" target="_blank">${site}</a>`;
+          clientPhone.textContent = '';
+          clientStage.textContent = cells[3].querySelector('select').value;
+          clientOwner.textContent = cells[4].textContent.trim();
+        }else{
+          clientNameEl.textContent = cells[0].textContent.trim();
+          clientCompany.textContent = cells[1].textContent.trim();
+          const email = cells[2].textContent.trim();
+          clientEmail.innerHTML = `<a href="mailto:${email}">${email}</a>`;
+          clientPhone.textContent = cells[3].textContent.trim();
+          clientStage.textContent = cells[4].querySelector('select').value;
+          clientOwner.textContent = cells[5].textContent.trim();
+        }
+        clientAddress.textContent = row.dataset.address || '';
+        clientNotes.value = row.dataset.notes || '';
+        clientFollowup.value = row.dataset.followup || '';
+        clientSuccess.value = row.dataset.success || '';
+        currentMetrics = row.dataset.metrics ? JSON.parse(row.dataset.metrics) : [];
+        currentHighlights = row.dataset.highlights ? JSON.parse(row.dataset.highlights) : [];
+        currentTrainings = row.dataset.trainings ? JSON.parse(row.dataset.trainings) : [];
+        currentEvents = row.dataset.events ? JSON.parse(row.dataset.events) : [];
+        currentWorkflows = row.dataset.workflows ? JSON.parse(row.dataset.workflows) : [];
+        currentFiles = row.dataset.files ? JSON.parse(row.dataset.files) : [];
+        renderMetrics(); renderHighlights(); renderTrainings(); renderEvents(); renderWorkflows(); renderFiles();
         clientMap.href = 'https://www.google.com/maps?q='+encodeURIComponent(clientAddress.textContent.trim());
         clientModal.classList.remove('hidden');
+      }
+      clientTable.addEventListener('dblclick', e=>{
+        const row = e.target.closest('tr');
+        if(!row) return;
+        openClientModal(row);
+      });
+      companyTable.addEventListener('dblclick', e=>{
+        const row = e.target.closest('tr');
+        if(!row) return;
+        openClientModal(row, true);
       });
       clientAddress.addEventListener('blur',()=>{
         clientMap.href = 'https://www.google.com/maps?q='+encodeURIComponent(clientAddress.textContent.trim());
@@ -755,9 +1028,37 @@
         if(!currentClientRow) return;
         currentClientRow.dataset.address = clientAddress.textContent.trim();
         currentClientRow.dataset.notes = clientNotes.value.trim();
+        currentClientRow.dataset.followup = clientFollowup.value;
+        currentClientRow.dataset.success = clientSuccess.value.trim();
+        currentClientRow.dataset.metrics = JSON.stringify(currentMetrics);
+        currentClientRow.dataset.highlights = JSON.stringify(currentHighlights);
+        currentClientRow.dataset.trainings = JSON.stringify(currentTrainings);
+        currentClientRow.dataset.events = JSON.stringify(currentEvents);
+        currentClientRow.dataset.workflows = JSON.stringify(currentWorkflows);
+        currentClientRow.dataset.files = JSON.stringify(currentFiles);
       }
       if(clientClose){ clientClose.addEventListener('click',()=>{ saveClientDetails(); clientModal.classList.add('hidden'); }); }
       if(clientModal){ clientModal.addEventListener('click', e=>{ if(e.target===clientModal.firstElementChild){ saveClientDetails(); clientModal.classList.add('hidden'); } }); }
+      if(clientDownload){
+        clientDownload.addEventListener('click',()=>{
+          const { jsPDF } = window.jspdf || {};
+          if(!jsPDF){ alert('PDF library not loaded'); return; }
+          const doc = new jsPDF();
+          const lines = [
+            `Name: ${clientNameEl.textContent.trim()}`,
+            `Company: ${clientCompany.textContent.trim()}`,
+            `Email: ${clientEmail.textContent.trim()}`,
+            `Phone: ${clientPhone.textContent.trim()}`,
+            `Stage: ${clientStage.textContent.trim()}`,
+            `Owner: ${clientOwner.textContent.trim()}`,
+            `Address: ${clientAddress.textContent.trim()}`,
+            `Notes: ${clientNotes.value.trim()}`
+          ];
+          let y = 10;
+          lines.forEach(line=>{ doc.text(line,10,y); y+=8; });
+          doc.save(`${clientNameEl.textContent.trim().replace(/\s+/g,'_')}.pdf`);
+        });
+      }
 
     // Project Tasks (Kanban)
     const taskColumns = {
@@ -773,14 +1074,24 @@
       }
       if(!tasks.length){
         tasks = [
-          {id:1,title:'Launch Onboarding Flow',due:'2024-09-05',status:'todo',checked:false},
-          {id:2,title:'Proposal for Blue Sky Studio',due:'2024-08-28',status:'progress',checked:false},
-          {id:3,title:'Kickoff – Acme Co.',due:'2024-08-20',status:'done',checked:true}
+          {id:1,title:'Launch Onboarding Flow',due:'2024-09-05',status:'todo',checked:false,clientId:'',companyId:'',teamId:''},
+          {id:2,title:'Proposal for Blue Sky Studio',due:'2024-08-28',status:'progress',checked:false,clientId:'',companyId:'',teamId:''},
+          {id:3,title:'Kickoff – Acme Co.',due:'2024-08-20',status:'done',checked:true,clientId:'',companyId:'',teamId:''}
         ];
       }
-      tasks = tasks.map(t=>({...t,checked:!!t.checked}));
+      tasks = tasks.map(t=>({...t,checked:!!t.checked, companyId:t.companyId||'', clientId:t.clientId||'', teamId:t.teamId||''}));
     }
     function saveTasks(){ localStorage.setItem('kanban-tasks', JSON.stringify(tasks)); }
+    function updateDashboardTasks(){
+      const list=document.getElementById('today-task-list');
+      if(!list) return;
+      list.innerHTML='';
+      dailyTasks.filter(t=>!t.checked).forEach(t=>{
+        const li=document.createElement('li');
+        li.textContent=t.title;
+        list.appendChild(li);
+      });
+    }
     function renderTasks(){
       Object.values(taskColumns).forEach(col=>col.innerHTML='');
       tasks.forEach(t=>{
@@ -790,7 +1101,12 @@
         div.className = 'task'+(t.checked?' checked':'');
         div.dataset.id = t.id;
         div.draggable = true;
-        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>`;
+        const assignedName = t.clientId ? (clientTable.querySelector(`#${t.clientId} .client-name`)?.textContent.trim() || '') : t.companyId ? (companyTable.querySelector(`#${t.companyId} td:first-child`)?.textContent.trim() || '') : '';
+        const assignedLabel = t.clientId ? 'Client' : t.companyId ? 'Company' : '';
+        const assignedId = t.clientId || t.companyId;
+        const contactLink = assignedName ? `<a href=\"#page-crm\" class=\"crm-link\" data-target=\"${assignedId}\" data-tab=\"${t.clientId?'crm-clients':'crm-companies'}\">${assignedName}</a>` : '';
+        const teamName = teamMembers.find(m=>m.id===t.teamId)?.name || '';
+        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${t.group?`<div class=\\"mini\\">Group: ${t.group}</div>`:''}${t.owner?`<div class=\\"mini\\">Owner: ${t.owner}</div>`:''}${t.priority?`<div class=\\"mini\\">Priority: ${t.priority}</div>`:''}${teamName?`<div class=\\"mini\\">Team: ${teamName}</div>`:''}${contactLink?`<div class=\\"mini\\">${assignedLabel}: ${contactLink}</div>`:''}`;
         col.appendChild(div);
       });
       updateInsights();
@@ -798,7 +1114,21 @@
     }
     function addTask(status,title,due){
       const id = Date.now();
-      tasks.push({id,title,due,status,checked:status==='done'});
+      const group = prompt('Group?','')||'';
+      const todo = prompt('To-Do?', title)||title;
+      if(!due) due = prompt('Due date? (YYYY-MM-DD)','')||'';
+      let statusText = prompt('Status? (Not Started/In Progress/Completed)', status)||status||'Not Started';
+      let boardStatus = 'todo';
+      if(/progress/i.test(statusText)) boardStatus='progress';
+      else if(/done|complete/i.test(statusText)) boardStatus='done';
+      const priority = prompt('Priority?','')||'';
+      const owner = prompt('Owner?','')||'';
+      const notes = prompt('Notes?','')||'';
+      const budget = prompt('Budget?','')||'';
+      const files = prompt('Files?','')||'';
+      const timeline = prompt('Timeline?','')||'';
+      const updated = new Date().toISOString().split('T')[0];
+      tasks.push({id,group,title:todo,due,status:boardStatus,priority,owner,notes,budget,files,timeline,updated,checked:boardStatus==='done',clientId:'',companyId:'',teamId:''});
       saveTasks();
       renderTasks();
     }
@@ -823,6 +1153,20 @@
           const due = new Date(); due.setDate(due.getDate()+7);
           addTask('todo', title, due.toISOString().split('T')[0]);
           templateSelect.value='';
+        });
+      }
+
+      const addCustomTaskBtn = document.getElementById('add-custom-task');
+      if(addCustomTaskBtn){
+        addCustomTaskBtn.addEventListener('click', ()=>{
+          const title = document.getElementById('custom-task-title').value.trim();
+          const due = document.getElementById('custom-task-due').value;
+          const status = document.getElementById('custom-task-status').value;
+          if(!title) return;
+          addTask(status, title, due);
+          document.getElementById('custom-task-title').value='';
+          document.getElementById('custom-task-due').value='';
+          document.getElementById('custom-task-status').value='todo';
         });
       }
 
@@ -859,7 +1203,10 @@
           dailyTasks = dailyTasks.map(t=>({...t, due: t.due || todayStr}));
         }
       }
-      function saveDaily(){ localStorage.setItem('daily-tasks', JSON.stringify(dailyTasks)); }
+      function saveDaily(){
+        localStorage.setItem('daily-tasks', JSON.stringify(dailyTasks));
+        updateDashboardTasks();
+      }
       function renderDaily(){
         if(!dailyList) return;
         dailyList.innerHTML='';
@@ -871,6 +1218,7 @@
           div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div contenteditable class="task-title">${t.title}</div></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${linkHTML}`;
           dailyList.appendChild(div);
         });
+        updateDashboardTasks();
       }
       const addDaily=document.getElementById('daily-add');
       const dailyDueInput=document.getElementById('daily-new-due');
@@ -978,6 +1326,7 @@
       }
 
       const barData = {};
+      const lineData = {};
       const tooltip = document.createElement('div');
       tooltip.id='chart-tooltip';
       document.body.appendChild(tooltip);
@@ -989,13 +1338,18 @@
         const personalCtx = document.getElementById('personal-mood-chart')?.getContext('2d');
         const teamCtx = document.getElementById('team-mood-chart')?.getContext('2d');
         const workloadCtx = document.getElementById('workload-chart')?.getContext('2d');
+        const revenueCtx = document.getElementById('revenue-chart')?.getContext('2d');
+        const timeCtx = document.getElementById('time-chart')?.getContext('2d');
         const labels = ['Sep 1','Sep 2','Sep 3','Sep 4','Sep 5'];
         const moodLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        const dayLabels = ['Mon','Tue','Wed','Thu','Fri'];
         if(overdueCtx){ drawBars(overdueCtx, [3,5,2,4,6], '#ef4444', labels); }
         if(completedCtx){ drawBars(completedCtx, [1,3,5,4,7], '#16a34a', labels); }
         if(workloadCtx){ drawBars(workloadCtx, [6,7,5,8,6], '#4f46e5', labels); }
         if(personalCtx){ drawBars(personalCtx, moodData, '#6b46c1', moodLabels.slice(-moodData.length)); }
         if(teamCtx){ drawBars(teamCtx, [3,4,2,5,4,3,4], '#8b5cf6', moodLabels); }
+        if(revenueCtx){ drawBars(revenueCtx, [200,350,150,400,500], '#4f46e5', dayLabels); }
+        if(timeCtx){ drawLine(timeCtx, [1,2,1.5,2.5,3], '#16a34a', dayLabels); }
       }
       function drawBars(ctx,data,color,labels){
         const id = ctx.canvas.id;
@@ -1023,6 +1377,41 @@
               tooltip.textContent = id==='workflow-chart'
                 ? `${bar.label}: ${bar.value}% complete`
                 : `${bar.label}: ${bar.value} tasks`;
+              tooltip.style.left=(e.clientX+10)+'px';
+              tooltip.style.top=(e.clientY+10)+'px';
+            }else{ tooltip.style.display='none'; }
+          });
+          ctx.canvas.addEventListener('mouseleave',()=> tooltip.style.display='none');
+          ctx.canvas.dataset.tooltipAttached='1';
+        }
+      }
+      function drawLine(ctx,data,color,labels){
+        const id = ctx.canvas.id;
+        const w=ctx.canvas.width, h=ctx.canvas.height;
+        ctx.clearRect(0,0,w,h);
+        const max=Math.max(...data);
+        const step=w/(data.length-1);
+        lineData[id]=[];
+        ctx.strokeStyle=color;
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        data.forEach((v,i)=>{
+          const x=i*step;
+          const y=h-(v/max)*h;
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+          lineData[id].push({x,y,label:labels[i],value:v});
+        });
+        ctx.stroke();
+        ctx.fillStyle=color;
+        lineData[id].forEach(p=>{ ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2); ctx.fill(); });
+        if(!ctx.canvas.dataset.tooltipAttached){
+          ctx.canvas.addEventListener('mousemove',e=>{
+            const rect=ctx.canvas.getBoundingClientRect();
+            const x=e.clientX-rect.left, y=e.clientY-rect.top;
+            const pt=lineData[id].find(p=>Math.hypot(p.x-x,p.y-y)<5);
+            if(pt){
+              tooltip.style.display='block';
+              tooltip.textContent=`${pt.label}: ${pt.value}`;
               tooltip.style.left=(e.clientX+10)+'px';
               tooltip.style.top=(e.clientY+10)+'px';
             }else{ tooltip.style.display='none'; }
@@ -1299,6 +1688,10 @@
       const modalNote = document.getElementById('modal-note');
       const modalContact = document.getElementById('modal-contact');
       const modalClose = document.getElementById('modal-close');
+      const modalClient = document.getElementById('modal-client');
+      const modalClientLabel = document.getElementById('modal-client-label');
+      const modalTeam = document.getElementById('modal-team');
+      const modalTeamLabel = document.getElementById('modal-team-label');
       function findCRMContactFromTitle(title){
         const match = title.match(/(?:Call|Email):\s*([^()]+)/i);
         if(match){
@@ -1316,7 +1709,18 @@
         const dueVal = modalDue.value;
         if(source==='kanban'){
           const t = tasks.find(x=>x.id===Number(id));
-          if(t){ t.due = dueVal?dueVal.split('T')[0]:''; saveTasks(); renderTasks(); }
+          if(t){
+            t.title = modalTitle.value.trim();
+            t.due = dueVal?dueVal.split('T')[0]:'';
+            t.clientId = '';
+            t.companyId = '';
+            t.teamId = modalTeam.value;
+            const val = modalClient.value;
+            if(val.startsWith('client:')) t.clientId = val.split(':')[1];
+            else if(val.startsWith('company:')) t.companyId = val.split(':')[1];
+            saveTasks();
+            renderTasks();
+          }
         }else if(source==='daily'){
           const d = dailyTasks.find(x=>x.id===Number(id));
           if(d){ d.due = dueVal?dueVal.split('T')[0]:''; saveDaily(); renderDaily(); }
@@ -1330,37 +1734,76 @@
         taskModal.addEventListener('click', e=>{ if(e.target===taskModal.firstElementChild){ saveTaskModal(); } });
       }
       if(modalClose){ modalClose.addEventListener('click', saveTaskModal); }
+    function updateModalContactFromSelect(){
+      if(!modalClient) return;
+      const val = modalClient.value;
+      if(val){
+        const [type,id] = val.split(':');
+        let row,name,tab;
+        if(type==='client'){
+          row = clientTable.querySelector(`#${id}`);
+          name = row ? row.querySelector('.client-name').textContent.trim() : '';
+          tab = 'crm-clients';
+        }else{
+          row = companyTable.querySelector(`#${id}`);
+          name = row ? row.children[0].textContent.trim() : '';
+          tab = 'crm-companies';
+        }
+        modalContact.innerHTML = name ? `<a href="#page-crm" class="crm-link" data-target="${id}" data-tab="${tab}">View ${type==='client'?'client':'company'}: ${name}</a>` : '';
+      }else{
+        modalContact.innerHTML = '';
+      }
+    }
+    if(modalClient){ modalClient.addEventListener('change', updateModalContactFromSelect); }
+
     function openTaskDetails(taskEl){
-      let title='', due='', source='', id='', article='';
+      let title='', due='', source='', id='', article='', key='';
+      let t=null;
       if(taskEl.dataset.id){
-        const t = tasks.find(x=>x.id===Number(taskEl.dataset.id));
-        if(t){ title=t.title; due=t.due||''; source='kanban'; id=t.id; }
+        t = tasks.find(x=>x.id===Number(taskEl.dataset.id));
+        if(t){ title=t.title; due=t.due||''; source='kanban'; id=t.id; key='task-'+id; }
       }else if(taskEl.closest('#upcoming-list')){
         const idx = Number(taskEl.dataset.index);
         const u = upcoming[idx];
-        title = u.title; due = u.time; source='upcoming'; id=idx;
+        title = u.title; due = u.time; source='upcoming'; id=idx; key=title;
       }else if(taskEl.closest('#page-daily')){
         const d = dailyTasks.find(x=>x.id===Number(taskEl.dataset.id));
-        if(d){ title=d.title; due=d.due||''; source='daily'; id=d.id; article=d.link; }
+        if(d){ title=d.title; due=d.due||''; source='daily'; id=d.id; article=d.link; key='task-'+id; }
       }else if(taskEl.closest('#pipeline')){
         title = taskEl.textContent.trim();
         due = taskEl.parentElement.dataset.stage || '';
         source='pipeline';
+        key=title;
       }
       if(title){
-        modalTitle.textContent=title;
+        modalTitle.value=title;
         modalDue.value = due ? (due.includes('T')?due:due+'T00:00') : '';
-        modalNote.value = taskNotes[title] || '';
-        const contact = findCRMContactFromTitle(title);
+        modalNote.value = taskNotes[key] || '';
         let html='';
-        if(contact){
-          html += `<a href="#page-crm" class="crm-link" data-target="${contact.id}">View contact: ${contact.name}</a>`;
+        if(source==='kanban'){
+          modalTitle.disabled = false;
+          const teamOpts = teamMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+          modalTeam.innerHTML = `<option value="">Unassigned</option>${teamOpts}`;
+          modalTeam.value = t ? t.teamId : '';
+          modalTeamLabel.style.display = modalTeam.style.display = '';
+          const clientOpts = [...clientTable.querySelectorAll('tr')]
+            .map(r=>`<option value="client:${r.id}">${r.querySelector('.client-name').textContent.trim()}</option>`).join('');
+          const companyOpts = [...companyTable.querySelectorAll('tr')]
+            .map(r=>{ if(!r.id) r.id='company-'+Math.random().toString(36).slice(2,9); return `<option value="company:${r.id}">${r.children[0].textContent.trim()}</option>`; }).join('');
+          modalClient.innerHTML = `<option value="">Unassigned</option><optgroup label="Clients">${clientOpts}</optgroup><optgroup label="Companies">${companyOpts}</optgroup>`;
+          modalClient.value = t && t.clientId ? `client:${t.clientId}` : t && t.companyId ? `company:${t.companyId}` : '';
+          modalClientLabel.style.display = modalClient.style.display = '';
+          updateModalContactFromSelect();
+        }else{
+          modalTitle.disabled = true;
+          modalTeamLabel.style.display = modalTeam.style.display = 'none';
+          modalClientLabel.style.display = modalClient.style.display = 'none';
+          const contact = findCRMContactFromTitle(title);
+          if(contact){ html += `<a href="#page-crm" class="crm-link" data-target="${contact.id}">View contact: ${contact.name}</a>`; }
+          if(article){ html += `${html?'<br/>':''}<a href="${article}" target="_blank">Wellness article</a>`; }
+          modalContact.innerHTML = html;
         }
-        if(article){
-          html += `${html?'<br/>':''}<a href="${article}" target="_blank">Wellness article</a>`;
-        }
-        modalContact.innerHTML = html;
-        taskModal.dataset.key = title;
+        taskModal.dataset.key = key;
         taskModal.dataset.source = source;
         taskModal.dataset.id = id;
         taskModal.classList.remove('hidden');
@@ -1383,53 +1826,171 @@
       openTaskDetails(taskEl);
     });
 
-    // Project table search and detail toggle
+    // Project table search and modal
+    function buildClientOptions(){
+      return [...clientTable.querySelectorAll('tr')]
+        .map(r=>`<option value="${r.id}">${r.querySelector('.client-name').textContent.trim()}</option>`).join('');
+    }
+    function buildCompanyOptions(){
+      return [...companyTable.querySelectorAll('tr')]
+        .map(r=>{ if(!r.id) r.id='company-'+Math.random().toString(36).slice(2,9); return `<option value="${r.id}">${r.children[0].textContent.trim()}</option>`; }).join('');
+    }
+    function populateProjectSelects(){
+      const clientOpts = `<option value="">None</option>${buildClientOptions()}`;
+      const companyOpts = `<option value="">None</option>${buildCompanyOptions()}`;
+      document.querySelectorAll('.project-client').forEach(sel=> sel.innerHTML = clientOpts);
+      document.querySelectorAll('.project-company').forEach(sel=> sel.innerHTML = companyOpts);
+      const newClient = document.getElementById('new-project-client');
+      const newCompany = document.getElementById('new-project-company');
+      if(newClient) newClient.innerHTML = clientOpts;
+      if(newCompany) newCompany.innerHTML = companyOpts;
+    }
+    populateProjectSelects();
     const projectSearch = document.getElementById('project-search');
     const projectTableBody = document.querySelector('#project-table tbody');
-    const projectDetail = document.getElementById('project-detail');
+    const addProjectBtn = document.getElementById('add-project');
+    const projectModal = document.getElementById('project-modal');
+    const projectClose = document.getElementById('project-close');
+    const projectTitle = document.getElementById('project-title');
+    const projectOwner = document.getElementById('project-owner');
+    const projectStatus = document.getElementById('project-status');
+    const projectDue = document.getElementById('project-due');
+    const projectTodo = document.getElementById('project-todo');
+    const projectProgress = document.getElementById('project-progress');
+    const projectDone = document.getElementById('project-done');
+
     const projectData = {
-      onboard:{tasks:{todo:['Send welcome email'],progress:['Compile documents'],done:['Kickoff call']},prompts:['Draft onboarding checklist','Suggest welcome email text','Outline first-week tasks']},
-      blue:{tasks:{todo:['Review requirements'],progress:['Write proposal'],done:['Initial consultation']},prompts:['Summarize client needs','Draft proposal outline','Plan follow-up steps']},
-      acme:{tasks:{todo:['Schedule kickoff'],progress:['Prepare agenda'],done:['Signed contract']},prompts:['Create kickoff agenda','Identify key stakeholders','Estimate project timeline']}
+      onboard:{tasks:{todo:[{title:'Send welcome email',note:'',due:'',status:'todo'}],progress:[{title:'Compile documents',note:'',due:'',status:'progress'}],done:[{title:'Kickoff call',note:'',due:'',status:'done'}]},prompts:['Draft onboarding checklist','Suggest welcome email text','Outline first-week tasks']},
+      blue:{tasks:{todo:[{title:'Review requirements',note:'',due:'',status:'todo'}],progress:[{title:'Write proposal',note:'',due:'',status:'progress'}],done:[{title:'Initial consultation',note:'',due:'',status:'done'}]},prompts:['Summarize client needs','Draft proposal outline','Plan follow-up steps']},
+      acme:{tasks:{todo:[{title:'Schedule kickoff',note:'',due:'',status:'todo'}],progress:[{title:'Prepare agenda',note:'',due:'',status:'progress'}],done:[{title:'Signed contract',note:'',due:'',status:'done'}]},prompts:['Create kickoff agenda','Identify key stakeholders','Estimate project timeline']}
     };
-    let currentProject=null;
-    function renderProject(key){
-      const data = projectData[key];
-      if(!data){projectDetail.classList.add('hidden');currentProject=null;return;}
-      if(currentProject===key){projectDetail.classList.add('hidden');currentProject=null;return;}
-      currentProject=key;
-      projectDetail.innerHTML=`
-        <div class="kanban">
-          <div class="column"><h4>To Do</h4>${data.tasks.todo.map(t=>`<div class="task"><strong>${t}</strong></div>`).join('')}</div>
-          <div class="column"><h4>In Progress</h4>${data.tasks.progress.map(t=>`<div class="task"><strong>${t}</strong></div>`).join('')}</div>
-          <div class="column"><h4>Done</h4>${data.tasks.done.map(t=>`<div class="task"><strong>${t}</strong></div>`).join('')}</div>
-        </div>
-        <div class="assistant" style="margin-top:12px">
-          <div class="prompt">${data.prompts[0]}</div>
-          <div class="prompt">${data.prompts[1]}</div>
-          <div class="prompt">${data.prompts[2]}</div>
-        </div>
-      `;
-      projectDetail.classList.remove('hidden');
+
+    let currentProjectKey='';
+    function openProjectModal(row){
+      const cells=[...row.children];
+      projectTitle.textContent=cells[0].textContent.trim();
+      projectOwner.textContent=cells[3].textContent.trim();
+      projectStatus.textContent=cells[4].textContent.trim();
+      projectDue.textContent=cells[5].textContent.trim();
+      currentProjectKey=row.dataset.key;
+      renderProjectLists();
+      projectModal.classList.remove('hidden');
     }
+
+    function renderProjectLists(){
+      const data=projectData[currentProjectKey]||{tasks:{todo:[],progress:[],done:[]}};
+      projectTodo.innerHTML=renderSubtasks(data.tasks.todo,'todo');
+      projectProgress.innerHTML=renderSubtasks(data.tasks.progress,'progress');
+      projectDone.innerHTML=renderSubtasks(data.tasks.done,'done');
+    }
+
     if(projectSearch){
       projectSearch.addEventListener('input',()=>{
         const q=projectSearch.value.toLowerCase();
         [...projectTableBody.querySelectorAll('tr')].forEach(tr=>{
-          const match=[...tr.children].some(td=>td.textContent.toLowerCase().includes(q));
+          const cells=[...tr.querySelectorAll('td')].slice(0,6);
+          const match=cells.some(td=>{
+            const sel=td.querySelector('select');
+            const text=sel? sel.selectedOptions[0]?.textContent || '' : td.textContent;
+            return text.toLowerCase().includes(q);
+          });
           tr.style.display=match?'':'none';
         });
       });
     }
+    if(addProjectBtn){
+      addProjectBtn.addEventListener('click',()=>{
+        const name=document.getElementById('new-project-name').value.trim();
+        const clientSel=document.getElementById('new-project-client');
+        const companySel=document.getElementById('new-project-company');
+        const clientId=clientSel.value;
+        const companyId=companySel.value;
+        const owner=document.getElementById('new-project-owner').value.trim();
+        const status=document.getElementById('new-project-status').value.trim();
+        const due=document.getElementById('new-project-due').value;
+        if(!name){alert('Project name required');return;}
+        const key=name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+Date.now();
+        projectData[key]={tasks:{todo:[],progress:[],done:[]},prompts:[]};
+        const tr=document.createElement('tr');
+        tr.dataset.key=key;
+        tr.tabIndex=0;
+        tr.dataset.clientId=clientId;
+        tr.dataset.companyId=companyId;
+        tr.innerHTML=`<td contenteditable>${name}</td><td><select class="input project-client"></select></td><td><select class="input project-company"></select></td><td contenteditable>${owner}</td><td contenteditable>${status}</td><td contenteditable>${due}</td><td><button class="btn link remove-project">Remove</button></td>`;
+        projectTableBody.appendChild(tr);
+        populateProjectSelects();
+        tr.querySelector('.project-client').value=clientId;
+        tr.querySelector('.project-company').value=companyId;
+        ['new-project-name','new-project-owner','new-project-status','new-project-due'].forEach(id=>document.getElementById(id).value='');
+        clientSel.value='';
+        companySel.value='';
+      });
+    }
     if(projectTableBody){
       projectTableBody.addEventListener('click',e=>{
+        if(e.target.classList.contains('remove-project')){
+          const row=e.target.closest('tr[data-key]');
+          if(row){
+            delete projectData[row.dataset.key];
+            row.remove();
+          }
+          return;
+        }
+      });
+      projectTableBody.addEventListener('dblclick',e=>{
         const row=e.target.closest('tr[data-key]');
-        if(row){renderProject(row.dataset.key);}
+        if(row){openProjectModal(row);}
       });
       projectTableBody.addEventListener('keydown',e=>{
         if(e.key==='Enter'){
           const row=e.target.closest('tr[data-key]');
-          if(row){renderProject(row.dataset.key);}
+          if(row){openProjectModal(row);}
+        }
+      });
+    }
+    if(projectClose){ projectClose.addEventListener('click',()=>projectModal.classList.add('hidden')); }
+    function renderSubtasks(arr,status){
+      let html='';
+      if(arr&&arr.length){
+        html=arr.map((t,i)=>`<li class="subtask" data-index="${i}"><div class="subtask-head"><span class="index">${i+1}.</span><input class="input subtask-title" value="${t.title||''}" /></div><input type="date" class="input subtask-due" value="${t.due||''}" /><select class="input subtask-state"><option value="todo"${(t.status||status)==='todo'?' selected':''}>Need to complete</option><option value="progress"${(t.status||status)==='progress'?' selected':''}>In progress</option><option value="done"${(t.status||status)==='done'?' selected':''}>Completed</option></select><textarea class="input subtask-note" placeholder="Notes">${t.note||''}</textarea><div class="subtask-actions"><button class="btn mini reminder-btn" aria-label="Add reminder">\uD83D\uDD14</button><button class="btn mini remove-subtask" aria-label="Remove subtask">\u2715</button></div></li>`).join('');
+      }else{
+        html='<li class="muted">None</li>';
+      }
+      html += '<li><button class="btn mini add-subtask">Add Subtask</button></li>';
+      return html;
+    }
+    if(projectModal){
+      projectModal.addEventListener('click',e=>{
+        if(e.target===projectModal.firstElementChild){ projectModal.classList.add('hidden'); return; }
+        if(e.target.classList.contains('reminder-btn')){ alert('Reminder added (demo)'); return; }
+        if(e.target.classList.contains('add-subtask')){
+          const status=e.target.closest('ul').dataset.status;
+          projectData[currentProjectKey].tasks[status].push({title:'',note:'',due:'',status});
+          renderProjectLists();
+          return;
+        }
+        if(e.target.classList.contains('remove-subtask')){
+          const li=e.target.closest('li');
+          const ul=li.parentElement; const status=ul.dataset.status; const idx=+li.dataset.index;
+          projectData[currentProjectKey].tasks[status].splice(idx,1);
+          renderProjectLists();
+        }
+      });
+      projectModal.addEventListener('input',e=>{
+        const li=e.target.closest('li.subtask');
+        if(!li) return;
+        const ul=li.parentElement; const status=ul.dataset.status; const idx=+li.dataset.index;
+        const item=projectData[currentProjectKey].tasks[status][idx];
+        if(e.target.classList.contains('subtask-title')) item.title=e.target.value;
+        if(e.target.classList.contains('subtask-note')) item.note=e.target.value;
+        if(e.target.classList.contains('subtask-due')) item.due=e.target.value;
+        if(e.target.classList.contains('subtask-state')){
+          const newStatus=e.target.value; item.status=newStatus;
+          if(newStatus!==status){
+            projectData[currentProjectKey].tasks[status].splice(idx,1);
+            projectData[currentProjectKey].tasks[newStatus].push(item);
+            renderProjectLists();
+          }
         }
       });
     }
