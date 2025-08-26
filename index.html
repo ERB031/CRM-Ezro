@@ -689,19 +689,7 @@
         col.appendChild(div);
       }
     }
-    // click to advance pipeline stage
-    if(pipelineBoard){
-      pipelineBoard.addEventListener('click',e=>{
-        const card=e.target.closest('.task');
-        if(!card) return;
-        const stages=['Lead','Proposal','Won'];
-        const current=card.parentElement.dataset.stage;
-        let idx=stages.indexOf(current);
-        idx=(idx+1)%stages.length;
-        const nextCol=pipelineBoard.querySelector(`.column[data-stage='${stages[idx]}']`);
-        if(nextCol) nextCol.appendChild(card);
-      });
-    }
+    // Pipeline cards no longer advance stages on click; movement occurs through drag and drop only
 
     // Clients table
     const addClientBtn = document.getElementById('add-client');
