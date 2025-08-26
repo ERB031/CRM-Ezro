@@ -535,9 +535,11 @@
       <section id="task-modal" class="hidden" aria-hidden="true">
       <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
         <div class="card" style="max-width:360px;text-align:center">
-          <h3 id="modal-title"></h3>
+          <input id="modal-title" class="input" placeholder="Task title" style="margin-bottom:8px" />
           <p class="mini" style="margin-bottom:4px">Due:</p>
           <input type="datetime-local" id="modal-due" class="input" style="margin-bottom:8px" />
+          <p class="mini" id="modal-client-label" style="margin-bottom:4px;display:none">Assign to client:</p>
+          <select id="modal-client" class="input" style="margin-bottom:8px;display:none"></select>
           <textarea id="modal-note" class="input" placeholder="Add notes" style="margin:8px 0"></textarea>
           <div id="modal-contact" class="mini" style="margin-bottom:8px"></div>
           <button class="btn secondary" id="modal-close">Close</button>
@@ -884,7 +886,8 @@
         div.className = 'task'+(t.checked?' checked':'');
         div.dataset.id = t.id;
         div.draggable = true;
-        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>`;
+        const clientName = t.clientId ? (clientTable.querySelector(`#${t.clientId} .client-name`)?.textContent.trim() || '') : '';
+        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${clientName?`<div class=\\"mini\\">Client: ${clientName}</div>`:''}`;
         col.appendChild(div);
       });
       updateInsights();
@@ -1449,6 +1452,8 @@
       const modalNote = document.getElementById('modal-note');
       const modalContact = document.getElementById('modal-contact');
       const modalClose = document.getElementById('modal-close');
+      const modalClient = document.getElementById('modal-client');
+      const modalClientLabel = document.getElementById('modal-client-label');
       function findCRMContactFromTitle(title){
         const match = title.match(/(?:Call|Email):\s*([^()]+)/i);
         if(match){
@@ -1466,7 +1471,13 @@
         const dueVal = modalDue.value;
         if(source==='kanban'){
           const t = tasks.find(x=>x.id===Number(id));
-          if(t){ t.due = dueVal?dueVal.split('T')[0]:''; saveTasks(); renderTasks(); }
+          if(t){
+            t.title = modalTitle.value.trim();
+            t.due = dueVal?dueVal.split('T')[0]:'';
+            t.clientId = modalClient.value;
+            saveTasks();
+            renderTasks();
+          }
         }else if(source==='daily'){
           const d = dailyTasks.find(x=>x.id===Number(id));
           if(d){ d.due = dueVal?dueVal.split('T')[0]:''; saveDaily(); renderDaily(); }
@@ -1480,37 +1491,59 @@
         taskModal.addEventListener('click', e=>{ if(e.target===taskModal.firstElementChild){ saveTaskModal(); } });
       }
       if(modalClose){ modalClose.addEventListener('click', saveTaskModal); }
+    function updateModalContactFromSelect(){
+      if(!modalClient) return;
+      const id = modalClient.value;
+      if(id){
+        const row = clientTable.querySelector(`#${id}`);
+        const name = row ? row.querySelector('.client-name').textContent.trim() : '';
+        modalContact.innerHTML = name ? `<a href="#page-crm" class="crm-link" data-target="${id}">View contact: ${name}</a>` : '';
+      }else{
+        modalContact.innerHTML = '';
+      }
+    }
+    if(modalClient){ modalClient.addEventListener('change', updateModalContactFromSelect); }
+
     function openTaskDetails(taskEl){
-      let title='', due='', source='', id='', article='';
+      let title='', due='', source='', id='', article='', key='';
+      let t=null;
       if(taskEl.dataset.id){
-        const t = tasks.find(x=>x.id===Number(taskEl.dataset.id));
-        if(t){ title=t.title; due=t.due||''; source='kanban'; id=t.id; }
+        t = tasks.find(x=>x.id===Number(taskEl.dataset.id));
+        if(t){ title=t.title; due=t.due||''; source='kanban'; id=t.id; key='task-'+id; }
       }else if(taskEl.closest('#upcoming-list')){
         const idx = Number(taskEl.dataset.index);
         const u = upcoming[idx];
-        title = u.title; due = u.time; source='upcoming'; id=idx;
+        title = u.title; due = u.time; source='upcoming'; id=idx; key=title;
       }else if(taskEl.closest('#page-daily')){
         const d = dailyTasks.find(x=>x.id===Number(taskEl.dataset.id));
-        if(d){ title=d.title; due=d.due||''; source='daily'; id=d.id; article=d.link; }
+        if(d){ title=d.title; due=d.due||''; source='daily'; id=d.id; article=d.link; key='task-'+id; }
       }else if(taskEl.closest('#pipeline')){
         title = taskEl.textContent.trim();
         due = taskEl.parentElement.dataset.stage || '';
         source='pipeline';
+        key=title;
       }
       if(title){
-        modalTitle.textContent=title;
+        modalTitle.value=title;
         modalDue.value = due ? (due.includes('T')?due:due+'T00:00') : '';
-        modalNote.value = taskNotes[title] || '';
-        const contact = findCRMContactFromTitle(title);
+        modalNote.value = taskNotes[key] || '';
         let html='';
-        if(contact){
-          html += `<a href="#page-crm" class="crm-link" data-target="${contact.id}">View contact: ${contact.name}</a>`;
+        if(source==='kanban'){
+          modalTitle.disabled = false;
+          modalClient.innerHTML = '<option value="">Unassigned</option>' + [...clientTable.querySelectorAll('tr')]
+            .map(r=>`<option value="${r.id}">${r.querySelector('.client-name').textContent.trim()}</option>`).join('');
+          modalClient.value = t && t.clientId ? t.clientId : '';
+          modalClientLabel.style.display = modalClient.style.display = '';
+          updateModalContactFromSelect();
+        }else{
+          modalTitle.disabled = true;
+          modalClientLabel.style.display = modalClient.style.display = 'none';
+          const contact = findCRMContactFromTitle(title);
+          if(contact){ html += `<a href="#page-crm" class="crm-link" data-target="${contact.id}">View contact: ${contact.name}</a>`; }
+          if(article){ html += `${html?'<br/>':''}<a href="${article}" target="_blank">Wellness article</a>`; }
+          modalContact.innerHTML = html;
         }
-        if(article){
-          html += `${html?'<br/>':''}<a href="${article}" target="_blank">Wellness article</a>`;
-        }
-        modalContact.innerHTML = html;
-        taskModal.dataset.key = title;
+        taskModal.dataset.key = key;
         taskModal.dataset.source = source;
         taskModal.dataset.id = id;
         taskModal.classList.remove('hidden');
