@@ -80,6 +80,13 @@
     .task.checked .task-title{text-decoration:line-through;color:var(--muted)}
     .notice{background:#f6f3ff;border:1px solid var(--border);padding:10px;border-radius:10px}
     .add-task-row{display:flex;gap:6px;margin-top:8px}
+    .task-col{padding:8px;border-radius:8px;border:1px solid var(--border)}
+    .task-col.todo{border-color:var(--warning);background:#f59e0b1a}
+    .task-col.todo h4{color:var(--warning)}
+    .task-col.progress{border-color:var(--purple);background:#6b46c11a}
+    .task-col.progress h4{color:var(--purple)}
+    .task-col.done{border-color:var(--success);background:#16a34a1a}
+    .task-col.done h4{color:var(--success)}
     #chart-tooltip{position:fixed;pointer-events:none;background:#fff;border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:12px;box-shadow:0 2px 4px rgba(17,12,34,.08);display:none}
     footer{padding:30px 20px;color:var(--muted);text-align:center}
     /* Sim.ai chat widget styles */
@@ -649,20 +656,20 @@
     <!-- PROJECT DETAIL MODAL -->
     <section id="project-modal" class="hidden" aria-hidden="true">
       <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
-        <div class="card" style="max-width:400px">
+        <div class="card" style="max-width:600px;width:90%">
           <h3 id="project-title"></h3>
           <p class="mini">Owner: <span id="project-owner"></span> • Status: <span id="project-status"></span></p>
           <p class="mini">Due: <span id="project-due"></span></p>
           <div class="grid grid-3 mini" style="margin:12px 0">
-            <div>
+            <div class="task-col todo">
               <h4>To Do</h4>
               <ul id="project-todo"></ul>
             </div>
-            <div>
+            <div class="task-col progress">
               <h4>In Progress</h4>
               <ul id="project-progress"></ul>
             </div>
-            <div>
+            <div class="task-col done">
               <h4>Done</h4>
               <ul id="project-done"></ul>
             </div>
