@@ -2008,7 +2008,7 @@
   <div id="help-widget-header">EZRO Help</div>
   <div id="help-widget-messages"></div>
   <form id="help-widget-input">
-    <input type="text" placeholder="Ask for help or advice..." />
+    <input type="text" placeholder="Ask about clients, companies or health..." />
     <button type="submit">Send</button>
   </form>
 </div>
@@ -2025,19 +2025,76 @@ function helpAppend(role, text) {
   helpMessages.scrollTop = helpMessages.scrollHeight;
 }
 
+function lookupClient(m){
+  const rows = document.querySelectorAll('#client-table tbody tr');
+  for(const row of rows){
+    const name = row.querySelector('.client-name').textContent.trim();
+    if(m.includes(name.toLowerCase())){
+      const company = row.children[1].textContent.trim();
+      const email = row.children[2].textContent.trim();
+      const phone = row.children[3].textContent.trim();
+      return `${name} works at ${company}. Email: ${email}. Phone: ${phone}.`;
+    }
+  }
+  return null;
+}
+
+function lookupCompany(m){
+  const rows = document.querySelectorAll('#company-table tbody tr');
+  for(const row of rows){
+    const name = row.children[0].textContent.trim();
+    if(m.includes(name.toLowerCase())){
+      const industry = row.children[1].textContent.trim();
+      const website = row.children[2].textContent.trim();
+      return `${name} operates in ${industry}. Website: ${website}.`;
+    }
+  }
+  return null;
+}
+
+function listClients(){
+  const rows = document.querySelectorAll('#client-table tbody tr');
+  return Array.from(rows).map(r=>r.querySelector('.client-name').textContent.trim()).join(', ');
+}
+
+function listCompanies(){
+  const rows = document.querySelectorAll('#company-table tbody tr');
+  return Array.from(rows).map(r=>r.children[0].textContent.trim()).join(', ');
+}
+
 function getHelpResponse(message) {
   const m = message.toLowerCase();
+
+  const clientInfo = lookupClient(m);
+  if(clientInfo) return clientInfo;
+
+  const companyInfo = lookupCompany(m);
+  if(companyInfo) return companyInfo;
+
+  if (m.includes('list clients'))
+    return `Clients: ${listClients()}`;
+  if (m.includes('list companies'))
+    return `Companies: ${listCompanies()}`;
+
   if (m.includes('add task')) {
     addTask('todo', 'Chatbot task', new Date().toISOString().split('T')[0]);
     return 'Added a sample task to your TODO list. Edit it as needed.';
   }
   if (m.includes('task'))
     return 'Use the "+" buttons in each column to add tasks or select a template.';
-  if (m.includes('client'))
-    return 'Manage clients from the Clients tab using the navigation bar.';
   if (m.includes('project'))
     return 'Projects can be organized in the Projects section; open the Projects tab to get started.';
-  return 'You can ask me about tasks, clients, or projects for quick tips.';
+
+  if (/(health|wellness|stress)/.test(m))
+    return 'Remember to take short breaks, stretch, and stay hydrated throughout your day.';
+  if (/(exercise|workout|stretch)/.test(m))
+    return 'A quick walk or a few stretches can boost your energy and focus.';
+  if (/(sleep|tired)/.test(m))
+    return 'Aim for 7-8 hours of sleep to keep your mind clear and productive.';
+  if (/(diet|nutrition|eat|meal)/.test(m))
+    return 'Balanced meals with fruits, vegetables, and lean proteins support sustained energy.';
+
+  return 'You can ask me about tasks, clients, companies, or get a quick wellness tip.';
 }
 
 helpForm.addEventListener('submit', (e) => {
