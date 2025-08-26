@@ -258,15 +258,15 @@
                 <tr><th>Company</th><th>Industry</th><th>Website</th><th>Stage</th><th>Owner</th></tr>
               </thead>
               <tbody>
-                <tr>
-                  <td contenteditable>Zenith Group</td>
+                  <tr id="company-zenith">
+                    <td contenteditable>Zenith Group</td>
                   <td contenteditable>Finance</td>
                   <td contenteditable>zenithgrp.com</td>
                   <td data-stage><select class="input stage-select"><option>Lead</option><option>Discovery</option><option selected>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
                   <td contenteditable>Nate</td>
                 </tr>
-                <tr>
-                  <td contenteditable>Blue Sky Studio</td>
+                  <tr id="company-blue">
+                    <td contenteditable>Blue Sky Studio</td>
                   <td contenteditable>Design</td>
                   <td contenteditable>blueskystudio.io</td>
                   <td data-stage><select class="input stage-select"><option selected>Lead</option><option>Discovery</option><option>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
@@ -579,31 +579,53 @@
             <div class="grid" style="gap:16px">
               <div class="card">
                 <h3>Metrics</h3>
-                <p class="mini">No associated metrics</p>
+                <ul id="client-metrics" class="mini"></ul>
+                <div class="add-task-row">
+                  <input id="metric-name" class="input" placeholder="Metric" />
+                  <input id="metric-value" class="input" placeholder="Value" />
+                  <button class="btn" id="add-metric">Add</button>
+                </div>
               </div>
               <div class="card">
                 <h3>Highlights & Alerts</h3>
-                <p class="mini">None</p>
+                <ul id="client-highlights" class="mini"></ul>
+                <div class="add-task-row">
+                  <input id="highlight-text" class="input" placeholder="Add highlight" />
+                  <button class="btn" id="add-highlight">Add</button>
+                </div>
               </div>
             </div>
           </div>
           <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px">
             <div class="card">
               <h3>Orientations & Trainings</h3>
-              <p class="mini">No trainings associated</p>
+              <ul id="client-trainings" class="mini"></ul>
+              <div class="add-task-row">
+                <input id="training-text" class="input" placeholder="Add training" />
+                <button class="btn" id="add-training">Add</button>
+              </div>
             </div>
             <div class="card">
               <h3>Associated Events</h3>
-              <p class="mini">No events associated</p>
+              <ul id="client-events" class="mini"></ul>
+              <div class="add-task-row">
+                <input id="event-text" class="input" placeholder="Add event" />
+                <button class="btn" id="add-event">Add</button>
+              </div>
             </div>
             <div class="card">
               <h3>Workflow List</h3>
-              <p class="mini">No workflows assigned</p>
+              <ul id="client-workflows" class="mini"></ul>
+              <div class="add-task-row">
+                <input id="workflow-text" class="input" placeholder="Add workflow" />
+                <button class="btn" id="add-workflow">Add</button>
+              </div>
             </div>
           </div>
           <div class="card" style="margin-top:16px">
             <h3>Document Center</h3>
-            <p class="mini">No files uploaded</p>
+            <ul id="client-files" class="mini"></ul>
+            <input type="file" id="file-upload" multiple class="input" style="margin-top:6px" />
           </div>
           <div class="linkrow" style="margin-top:16px;justify-content:center">
             <button class="btn secondary" id="client-close">Close</button>
@@ -695,6 +717,8 @@
       if(navTo){ e.preventDefault(); showPage(navTo.dataset.nav); }
       const crmLink = e.target.closest('.crm-link');
       if(crmLink){ e.preventDefault(); showPage('#page-crm');
+        const tab = crmLink.dataset.tab;
+        if(tab){ const btn=document.querySelector(`.crm-tab[data-target="${tab}"]`); if(btn) btn.click(); }
         const rowId = crmLink.dataset.target;
         const row = document.getElementById(rowId);
         if(row){ row.scrollIntoView({behavior:'smooth', block:'center'}); row.style.outline='2px solid var(--purple)'; setTimeout(()=>row.style.outline='none', 1800); }
@@ -745,7 +769,8 @@
         const name=getVal('new-name'); const comp=getVal('new-company'); const email=getVal('new-email'); const phone=getVal('new-phone'); const stage=getVal('new-stage'); const owner=getVal('new-owner');
         if(!name||!comp){ alert('Name and Company are required.'); return; }
         const tr=document.createElement('tr');
-        tr.innerHTML=`<td contenteditable>${name}</td><td contenteditable>${comp}</td><td contenteditable>${email}</td><td contenteditable>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
+        tr.id = 'client-'+Date.now();
+        tr.innerHTML=`<td contenteditable class="client-name">${name}</td><td contenteditable>${comp}</td><td contenteditable>${email}</td><td contenteditable>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
         clientTable.appendChild(tr);
         addToPipeline(name, comp, stage);
         openClientModal(tr);
@@ -780,6 +805,7 @@
           clientTable.innerHTML='';
           rows.forEach(cols=>{
             const tr=document.createElement('tr');
+            tr.id = 'client-'+Math.random().toString(36).slice(2,9);
             tr.innerHTML = cols.map((v,i)=> i===4? `<td data-stage>${stageDropdown(v)}</td>` : `<td contenteditable>${v}</td>`).join('');
             clientTable.appendChild(tr);
           });
@@ -797,6 +823,7 @@
         const name=getVal('new-comp-name'); const industry=getVal('new-comp-industry'); const site=getVal('new-comp-website'); const stage=getVal('new-comp-stage'); const owner=getVal('new-comp-owner');
         if(!name){ alert('Company name required'); return; }
         const tr=document.createElement('tr');
+        tr.id = 'company-'+Date.now();
         tr.innerHTML=`<td contenteditable>${name}</td><td contenteditable>${industry}</td><td contenteditable>${site}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
         companyTable.appendChild(tr);
         ['new-comp-name','new-comp-industry','new-comp-website','new-comp-owner'].forEach(id=>document.getElementById(id).value='');
@@ -829,6 +856,7 @@
           companyTable.innerHTML='';
           rows.forEach(cols=>{
             const tr=document.createElement('tr');
+            tr.id = 'company-'+Math.random().toString(36).slice(2,9);
             tr.innerHTML = cols.map((v,i)=> i===3? `<td data-stage>${stageDropdown(v)}</td>` : `<td contenteditable>${v}</td>`).join('');
             companyTable.appendChild(tr);
           });
@@ -850,7 +878,71 @@
       const clientFollowup = document.getElementById('client-followup');
       const clientSuccess = document.getElementById('client-success');
       const clientMap = document.getElementById('client-map');
+      const clientMetrics = document.getElementById('client-metrics');
+      const metricName = document.getElementById('metric-name');
+      const metricValue = document.getElementById('metric-value');
+      const addMetricBtn = document.getElementById('add-metric');
+      const clientHighlights = document.getElementById('client-highlights');
+      const highlightText = document.getElementById('highlight-text');
+      const addHighlightBtn = document.getElementById('add-highlight');
+      const clientTrainings = document.getElementById('client-trainings');
+      const trainingText = document.getElementById('training-text');
+      const addTrainingBtn = document.getElementById('add-training');
+      const clientEvents = document.getElementById('client-events');
+      const eventText = document.getElementById('event-text');
+      const addEventBtn = document.getElementById('add-event');
+      const clientWorkflows = document.getElementById('client-workflows');
+      const workflowText = document.getElementById('workflow-text');
+      const addWorkflowBtn = document.getElementById('add-workflow');
+      const clientFiles = document.getElementById('client-files');
+      const fileUpload = document.getElementById('file-upload');
       let currentClientRow = null;
+      let currentMetrics = [], currentHighlights = [], currentTrainings = [], currentEvents = [], currentWorkflows = [], currentFiles = [];
+
+      function renderMetrics(){
+        if(!clientMetrics) return;
+        clientMetrics.innerHTML = '';
+        if(!currentMetrics.length){ clientMetrics.innerHTML = '<li class="mini">No metrics</li>'; return; }
+        currentMetrics.forEach((m,i)=>{
+          const li=document.createElement('li');
+          li.textContent = `${m.name}: ${m.value}`;
+          li.addEventListener('click',()=>{ currentMetrics.splice(i,1); renderMetrics(); });
+          clientMetrics.appendChild(li);
+        });
+      }
+      function renderList(arr, listEl, empty){
+        if(!listEl) return;
+        listEl.innerHTML = '';
+        if(!arr.length){ listEl.innerHTML = `<li class=\"mini\">${empty}</li>`; return; }
+        arr.forEach((txt,i)=>{
+          const li=document.createElement('li');
+          li.textContent = txt;
+          li.addEventListener('click',()=>{ arr.splice(i,1); renderList(arr,listEl,empty); });
+          listEl.appendChild(li);
+        });
+      }
+      const renderHighlights = ()=>renderList(currentHighlights, clientHighlights, 'None');
+      const renderTrainings = ()=>renderList(currentTrainings, clientTrainings, 'No trainings');
+      const renderEvents = ()=>renderList(currentEvents, clientEvents, 'No events');
+      const renderWorkflows = ()=>renderList(currentWorkflows, clientWorkflows, 'No workflows');
+      function renderFiles(){
+        if(!clientFiles) return;
+        clientFiles.innerHTML='';
+        if(!currentFiles.length){ clientFiles.innerHTML='<li class="mini">No files uploaded</li>'; return; }
+        currentFiles.forEach((f,i)=>{
+          const li=document.createElement('li');
+          li.textContent=f;
+          li.addEventListener('click',()=>{ currentFiles.splice(i,1); renderFiles(); });
+          clientFiles.appendChild(li);
+        });
+      }
+
+      if(addMetricBtn){ addMetricBtn.addEventListener('click',()=>{ const n=metricName.value.trim(); const v=metricValue.value.trim(); if(!n||!v) return; currentMetrics.push({name:n,value:v}); metricName.value=''; metricValue.value=''; renderMetrics(); }); }
+      if(addHighlightBtn){ addHighlightBtn.addEventListener('click',()=>{ const t=highlightText.value.trim(); if(!t) return; currentHighlights.push(t); highlightText.value=''; renderHighlights(); }); }
+      if(addTrainingBtn){ addTrainingBtn.addEventListener('click',()=>{ const t=trainingText.value.trim(); if(!t) return; currentTrainings.push(t); trainingText.value=''; renderTrainings(); }); }
+      if(addEventBtn){ addEventBtn.addEventListener('click',()=>{ const t=eventText.value.trim(); if(!t) return; currentEvents.push(t); eventText.value=''; renderEvents(); }); }
+      if(addWorkflowBtn){ addWorkflowBtn.addEventListener('click',()=>{ const t=workflowText.value.trim(); if(!t) return; currentWorkflows.push(t); workflowText.value=''; renderWorkflows(); }); }
+      if(fileUpload){ fileUpload.addEventListener('change',()=>{ [...fileUpload.files].forEach(f=>currentFiles.push(f.name)); fileUpload.value=''; renderFiles(); }); }
       function openClientModal(row, isCompany=false){
         currentClientRow = row;
         const cells = row.children;
@@ -875,6 +967,13 @@
         clientNotes.value = row.dataset.notes || '';
         clientFollowup.value = row.dataset.followup || '';
         clientSuccess.value = row.dataset.success || '';
+        currentMetrics = row.dataset.metrics ? JSON.parse(row.dataset.metrics) : [];
+        currentHighlights = row.dataset.highlights ? JSON.parse(row.dataset.highlights) : [];
+        currentTrainings = row.dataset.trainings ? JSON.parse(row.dataset.trainings) : [];
+        currentEvents = row.dataset.events ? JSON.parse(row.dataset.events) : [];
+        currentWorkflows = row.dataset.workflows ? JSON.parse(row.dataset.workflows) : [];
+        currentFiles = row.dataset.files ? JSON.parse(row.dataset.files) : [];
+        renderMetrics(); renderHighlights(); renderTrainings(); renderEvents(); renderWorkflows(); renderFiles();
         clientMap.href = 'https://www.google.com/maps?q='+encodeURIComponent(clientAddress.textContent.trim());
         clientModal.classList.remove('hidden');
       }
@@ -897,6 +996,12 @@
         currentClientRow.dataset.notes = clientNotes.value.trim();
         currentClientRow.dataset.followup = clientFollowup.value;
         currentClientRow.dataset.success = clientSuccess.value.trim();
+        currentClientRow.dataset.metrics = JSON.stringify(currentMetrics);
+        currentClientRow.dataset.highlights = JSON.stringify(currentHighlights);
+        currentClientRow.dataset.trainings = JSON.stringify(currentTrainings);
+        currentClientRow.dataset.events = JSON.stringify(currentEvents);
+        currentClientRow.dataset.workflows = JSON.stringify(currentWorkflows);
+        currentClientRow.dataset.files = JSON.stringify(currentFiles);
       }
       if(clientClose){ clientClose.addEventListener('click',()=>{ saveClientDetails(); clientModal.classList.add('hidden'); }); }
       if(clientModal){ clientModal.addEventListener('click', e=>{ if(e.target===clientModal.firstElementChild){ saveClientDetails(); clientModal.classList.add('hidden'); } }); }
@@ -920,7 +1025,7 @@
           {id:3,title:'Kickoff – Acme Co.',due:'2024-08-20',status:'done',checked:true}
         ];
       }
-      tasks = tasks.map(t=>({...t,checked:!!t.checked}));
+      tasks = tasks.map(t=>({...t,checked:!!t.checked, companyId:t.companyId||''}));
     }
     function saveTasks(){ localStorage.setItem('kanban-tasks', JSON.stringify(tasks)); }
     function updateDashboardTasks(){
@@ -942,8 +1047,9 @@
         div.className = 'task'+(t.checked?' checked':'');
         div.dataset.id = t.id;
         div.draggable = true;
-        const clientName = t.clientId ? (clientTable.querySelector(`#${t.clientId} .client-name`)?.textContent.trim() || '') : '';
-        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${clientName?`<div class=\\"mini\\">Client: ${clientName}</div>`:''}`;
+        const assignedName = t.clientId ? (clientTable.querySelector(`#${t.clientId} .client-name`)?.textContent.trim() || '') : t.companyId ? (companyTable.querySelector(`#${t.companyId} td:first-child`)?.textContent.trim() || '') : '';
+        const assignedLabel = t.clientId ? 'Client' : t.companyId ? 'Company' : '';
+        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${assignedName?`<div class=\\"mini\\">${assignedLabel}: ${assignedName}</div>`:''}`;
         col.appendChild(div);
       });
       updateInsights();
@@ -1530,7 +1636,11 @@
           if(t){
             t.title = modalTitle.value.trim();
             t.due = dueVal?dueVal.split('T')[0]:'';
-            t.clientId = modalClient.value;
+            t.clientId = '';
+            t.companyId = '';
+            const val = modalClient.value;
+            if(val.startsWith('client:')) t.clientId = val.split(':')[1];
+            else if(val.startsWith('company:')) t.companyId = val.split(':')[1];
             saveTasks();
             renderTasks();
           }
@@ -1549,11 +1659,20 @@
       if(modalClose){ modalClose.addEventListener('click', saveTaskModal); }
     function updateModalContactFromSelect(){
       if(!modalClient) return;
-      const id = modalClient.value;
-      if(id){
-        const row = clientTable.querySelector(`#${id}`);
-        const name = row ? row.querySelector('.client-name').textContent.trim() : '';
-        modalContact.innerHTML = name ? `<a href="#page-crm" class="crm-link" data-target="${id}">View contact: ${name}</a>` : '';
+      const val = modalClient.value;
+      if(val){
+        const [type,id] = val.split(':');
+        let row,name,tab;
+        if(type==='client'){
+          row = clientTable.querySelector(`#${id}`);
+          name = row ? row.querySelector('.client-name').textContent.trim() : '';
+          tab = 'crm-clients';
+        }else{
+          row = companyTable.querySelector(`#${id}`);
+          name = row ? row.children[0].textContent.trim() : '';
+          tab = 'crm-companies';
+        }
+        modalContact.innerHTML = name ? `<a href="#page-crm" class="crm-link" data-target="${id}" data-tab="${tab}">View ${type==='client'?'client':'company'}: ${name}</a>` : '';
       }else{
         modalContact.innerHTML = '';
       }
@@ -1586,9 +1705,12 @@
         let html='';
         if(source==='kanban'){
           modalTitle.disabled = false;
-          modalClient.innerHTML = '<option value="">Unassigned</option>' + [...clientTable.querySelectorAll('tr')]
-            .map(r=>`<option value="${r.id}">${r.querySelector('.client-name').textContent.trim()}</option>`).join('');
-          modalClient.value = t && t.clientId ? t.clientId : '';
+          const clientOpts = [...clientTable.querySelectorAll('tr')]
+            .map(r=>`<option value="client:${r.id}">${r.querySelector('.client-name').textContent.trim()}</option>`).join('');
+          const companyOpts = [...companyTable.querySelectorAll('tr')]
+            .map(r=>{ if(!r.id) r.id='company-'+Math.random().toString(36).slice(2,9); return `<option value="company:${r.id}">${r.children[0].textContent.trim()}</option>`; }).join('');
+          modalClient.innerHTML = `<option value="">Unassigned</option><optgroup label="Clients">${clientOpts}</optgroup><optgroup label="Companies">${companyOpts}</optgroup>`;
+          modalClient.value = t && t.clientId ? `client:${t.clientId}` : t && t.companyId ? `company:${t.companyId}` : '';
           modalClientLabel.style.display = modalClient.style.display = '';
           updateModalContactFromSelect();
         }else{
