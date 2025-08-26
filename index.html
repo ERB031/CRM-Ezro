@@ -550,21 +550,62 @@
     <!-- CLIENT DETAIL MODAL -->
     <section id="client-modal" class="hidden" aria-hidden="true">
       <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
-        <div class="card" style="max-width:400px">
-          <h3 id="client-name"></h3>
-          <p class="mini" id="client-company"></p>
-          <p class="mini" id="client-email"></p>
-          <p class="mini" id="client-phone"></p>
-          <p class="mini">Stage: <span id="client-stage"></span> • Owner: <span id="client-owner"></span></p>
-          <p class="mini">Address:</p>
-          <div id="client-address" contenteditable class="input" style="margin-bottom:6px"></div>
-          <p class="mini"><a id="client-map" href="#" target="_blank">View on map</a></p>
-          <p class="mini" style="margin-top:6px">Follow-up Date:</p>
-          <input type="date" id="client-followup" class="input" style="margin-bottom:6px" />
-          <p class="mini" style="margin-top:6px">Success Definition:</p>
-          <textarea id="client-success" class="input" placeholder="Define success" style="margin-top:6px"></textarea>
-          <textarea id="client-notes" class="input" placeholder="Notes" style="margin-top:6px"></textarea>
-          <div class="linkrow" style="margin-top:10px;justify-content:center">
+        <div style="background:var(--bg);padding:20px;border-radius:14px;max-width:900px;width:90%;max-height:90vh;overflow:auto">
+          <h2>Person Profile</h2>
+          <p class="mini muted">Details about this person and how they interact with the org, plus which orientations and trainings and any events they were involved in.</p>
+          <div class="grid" style="grid-template-columns:2fr 1fr;gap:16px">
+            <div class="card">
+              <div class="kpi" style="justify-content:space-between">
+                <h3>Details</h3>
+                <div class="linkrow">
+                  <button class="btn link" id="client-download">Download</button>
+                  <button class="btn link" id="client-edit">Edit</button>
+                </div>
+              </div>
+              <p><strong id="client-name"></strong></p>
+              <p class="mini" id="client-company"></p>
+              <p class="mini" id="client-email"></p>
+              <p class="mini" id="client-phone"></p>
+              <p class="mini">Stage: <span id="client-stage"></span> • Owner: <span id="client-owner"></span></p>
+              <p class="mini">Address:</p>
+              <div id="client-address" contenteditable class="input" style="margin-bottom:6px"></div>
+              <p class="mini"><a id="client-map" href="#" target="_blank">View on map</a></p>
+              <p class="mini" style="margin-top:6px">Follow-up Date:</p>
+              <input type="date" id="client-followup" class="input" style="margin-bottom:6px" />
+              <p class="mini" style="margin-top:6px">Success Definition:</p>
+              <textarea id="client-success" class="input" placeholder="Define success"></textarea>
+              <textarea id="client-notes" class="input" placeholder="Notes" style="margin-top:6px"></textarea>
+            </div>
+            <div class="grid" style="gap:16px">
+              <div class="card">
+                <h3>Metrics</h3>
+                <p class="mini">No associated metrics</p>
+              </div>
+              <div class="card">
+                <h3>Highlights & Alerts</h3>
+                <p class="mini">None</p>
+              </div>
+            </div>
+          </div>
+          <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px">
+            <div class="card">
+              <h3>Orientations & Trainings</h3>
+              <p class="mini">No trainings associated</p>
+            </div>
+            <div class="card">
+              <h3>Associated Events</h3>
+              <p class="mini">No events associated</p>
+            </div>
+            <div class="card">
+              <h3>Workflow List</h3>
+              <p class="mini">No workflows assigned</p>
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <h3>Document Center</h3>
+            <p class="mini">No files uploaded</p>
+          </div>
+          <div class="linkrow" style="margin-top:16px;justify-content:center">
             <button class="btn secondary" id="client-close">Close</button>
           </div>
         </div>
@@ -810,16 +851,26 @@
       const clientSuccess = document.getElementById('client-success');
       const clientMap = document.getElementById('client-map');
       let currentClientRow = null;
-      function openClientModal(row){
+      function openClientModal(row, isCompany=false){
         currentClientRow = row;
         const cells = row.children;
-        clientNameEl.textContent = cells[0].textContent.trim();
-        clientCompany.textContent = cells[1].textContent.trim();
-        const email = cells[2].textContent.trim();
-        clientEmail.innerHTML = `<a href="mailto:${email}">${email}</a>`;
-        clientPhone.textContent = cells[3].textContent.trim();
-        clientStage.textContent = cells[4].querySelector('select').value;
-        clientOwner.textContent = cells[5].textContent.trim();
+        if(isCompany){
+          clientNameEl.textContent = cells[0].textContent.trim();
+          clientCompany.textContent = `Industry: ${cells[1].textContent.trim()}`;
+          const site = cells[2].textContent.trim();
+          clientEmail.innerHTML = `<a href="http://${site}" target="_blank">${site}</a>`;
+          clientPhone.textContent = '';
+          clientStage.textContent = cells[3].querySelector('select').value;
+          clientOwner.textContent = cells[4].textContent.trim();
+        }else{
+          clientNameEl.textContent = cells[0].textContent.trim();
+          clientCompany.textContent = cells[1].textContent.trim();
+          const email = cells[2].textContent.trim();
+          clientEmail.innerHTML = `<a href="mailto:${email}">${email}</a>`;
+          clientPhone.textContent = cells[3].textContent.trim();
+          clientStage.textContent = cells[4].querySelector('select').value;
+          clientOwner.textContent = cells[5].textContent.trim();
+        }
         clientAddress.textContent = row.dataset.address || '';
         clientNotes.value = row.dataset.notes || '';
         clientFollowup.value = row.dataset.followup || '';
@@ -831,6 +882,11 @@
         const row = e.target.closest('tr');
         if(!row) return;
         openClientModal(row);
+      });
+      companyTable.addEventListener('dblclick', e=>{
+        const row = e.target.closest('tr');
+        if(!row) return;
+        openClientModal(row, true);
       });
       clientAddress.addEventListener('blur',()=>{
         clientMap.href = 'https://www.google.com/maps?q='+encodeURIComponent(clientAddress.textContent.trim());
