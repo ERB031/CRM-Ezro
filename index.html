@@ -1173,7 +1173,10 @@
           dailyTasks = dailyTasks.map(t=>({...t, due: t.due || todayStr}));
         }
       }
-      function saveDaily(){ localStorage.setItem('daily-tasks', JSON.stringify(dailyTasks)); }
+      function saveDaily(){
+        localStorage.setItem('daily-tasks', JSON.stringify(dailyTasks));
+        updateDashboardTasks();
+      }
       function renderDaily(){
         if(!dailyList) return;
         dailyList.innerHTML='';
