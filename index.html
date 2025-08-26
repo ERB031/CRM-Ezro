@@ -59,7 +59,8 @@
     .column{background:var(--bg-alt);border:1px dashed var(--border);border-radius:12px;padding:10px;min-width:300px}
     .column h4{margin:0 0 8px 0}
     .task{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px}
-    .subtask{display:flex;align-items:center;gap:8px;margin:6px 0}
+    .subtask{display:flex;align-items:flex-start;gap:8px;margin:6px 0;flex-wrap:wrap}
+    .subtask textarea{flex:1 1 100%;min-height:40px}
     .assistant{background:linear-gradient(180deg,#efe8ff,#fff);border:1px solid var(--border);border-radius:14px;padding:12px}
     .prompt{display:block;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0}
     .prompt:hover{background:var(--purple-100)}
@@ -1090,7 +1091,7 @@
         const assignedId = t.clientId || t.companyId;
         const contactLink = assignedName ? `<a href=\"#page-crm\" class=\"crm-link\" data-target=\"${assignedId}\" data-tab=\"${t.clientId?'crm-clients':'crm-companies'}\">${assignedName}</a>` : '';
         const teamName = teamMembers.find(m=>m.id===t.teamId)?.name || '';
-        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${teamName?`<div class=\\"mini\\">Team: ${teamName}</div>`:''}${contactLink?`<div class=\\"mini\\">${assignedLabel}: ${contactLink}</div>`:''}`;
+        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${t.group?`<div class=\\"mini\\">Group: ${t.group}</div>`:''}${t.owner?`<div class=\\"mini\\">Owner: ${t.owner}</div>`:''}${t.priority?`<div class=\\"mini\\">Priority: ${t.priority}</div>`:''}${teamName?`<div class=\\"mini\\">Team: ${teamName}</div>`:''}${contactLink?`<div class=\\"mini\\">${assignedLabel}: ${contactLink}</div>`:''}`;
         col.appendChild(div);
       });
       updateInsights();
@@ -1098,7 +1099,21 @@
     }
     function addTask(status,title,due){
       const id = Date.now();
-      tasks.push({id,title,due,status,checked:status==='done',clientId:'',companyId:'',teamId:''});
+      const group = prompt('Group?','')||'';
+      const todo = prompt('To-Do?', title)||title;
+      if(!due) due = prompt('Due date? (YYYY-MM-DD)','')||'';
+      let statusText = prompt('Status? (Not Started/In Progress/Completed)', status)||status||'Not Started';
+      let boardStatus = 'todo';
+      if(/progress/i.test(statusText)) boardStatus='progress';
+      else if(/done|complete/i.test(statusText)) boardStatus='done';
+      const priority = prompt('Priority?','')||'';
+      const owner = prompt('Owner?','')||'';
+      const notes = prompt('Notes?','')||'';
+      const budget = prompt('Budget?','')||'';
+      const files = prompt('Files?','')||'';
+      const timeline = prompt('Timeline?','')||'';
+      const updated = new Date().toISOString().split('T')[0];
+      tasks.push({id,group,title:todo,due,status:boardStatus,priority,owner,notes,budget,files,timeline,updated,checked:boardStatus==='done',clientId:'',companyId:'',teamId:''});
       saveTasks();
       renderTasks();
     }
@@ -1842,9 +1857,9 @@
       projectStatus.textContent=cells[4].textContent.trim();
       projectDue.textContent=cells[5].textContent.trim();
       const data=projectData[row.dataset.key]||{tasks:{todo:[],progress:[],done:[]}};
-      projectTodo.innerHTML=data.tasks.todo.map(t=>`<li>${t}</li>`).join('')||'<li class="muted">None</li>';
-      projectProgress.innerHTML=data.tasks.progress.map(t=>`<li>${t}</li>`).join('')||'<li class="muted">None</li>';
-      projectDone.innerHTML=data.tasks.done.map(t=>`<li>${t}</li>`).join('')||'<li class="muted">None</li>';
+      projectTodo.innerHTML=renderSubtasks(data.tasks.todo,'need');
+      projectProgress.innerHTML=renderSubtasks(data.tasks.progress,'progress');
+      projectDone.innerHTML=renderSubtasks(data.tasks.done,'done');
       projectModal.classList.remove('hidden');
     }
 
@@ -1913,7 +1928,11 @@
       });
     }
     if(projectClose){ projectClose.addEventListener('click',()=>projectModal.classList.add('hidden')); }
-    if(projectModal){ projectModal.addEventListener('click',e=>{ if(e.target===projectModal.firstElementChild){ projectModal.classList.add('hidden'); } }); }
+    function renderSubtasks(arr,status){
+      if(!arr||!arr.length) return '<li class="muted">None</li>';
+      return arr.map((t,i)=>`<li class="subtask"><span>${i+1}.</span><span class="task" style="flex:1">${t}</span><select class="input subtask-state"><option value="need"${status==='need'?' selected':''}>Need to complete</option><option value="progress"${status==='progress'?' selected':''}>In progress</option><option value="done"${status==='done'?' selected':''}>Completed</option></select><button class="btn mini reminder-btn" aria-label="Add reminder">\uD83D\uDD14</button><textarea placeholder="Notes"></textarea></li>`).join('');
+    }
+    if(projectModal){ projectModal.addEventListener('click',e=>{ if(e.target===projectModal.firstElementChild){ projectModal.classList.add('hidden'); } if(e.target.classList.contains('reminder-btn')){ alert('Reminder added (demo)'); } }); }
 
     // Done for the Day overlay
     const doneBtn = document.getElementById('done-day');
