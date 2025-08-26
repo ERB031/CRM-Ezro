@@ -125,6 +125,7 @@
       cursor:pointer;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 <body>
   <header>
@@ -298,15 +299,15 @@
         <div class="grid grid-3" id="pipeline">
           <div class="column" data-stage="Lead">
             <h4>Lead</h4>
-            <div class="task" draggable="true">Alex Rivera – Zenith Group</div>
+            <div class="task" draggable="true">Alex Rivera – Zenith Group<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-alex" data-tab="crm-clients">Profile</a></div></div>
           </div>
           <div class="column" data-stage="Proposal">
             <h4>Proposal</h4>
-            <div class="task" draggable="true">Priya Shah – Blue Sky Studio</div>
+            <div class="task" draggable="true">Priya Shah – Blue Sky Studio<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-priya" data-tab="crm-clients">Profile</a></div></div>
           </div>
           <div class="column" data-stage="Won">
             <h4>Won</h4>
-            <div class="task" draggable="true">Jordan Lee – Acme Co.</div>
+            <div class="task" draggable="true">Jordan Lee – Acme Co.<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-acme" data-tab="crm-clients">Profile</a></div></div>
           </div>
         </div>
       </div>
@@ -424,11 +425,13 @@
         <input class="input" id="project-search" placeholder="Search projects" style="margin-bottom:8px" />
         <table class="table" id="project-table" role="table">
           <thead>
-            <tr><th>Project</th><th>Owner</th><th>Status</th><th>Due</th><th></th></tr>
+            <tr><th>Project</th><th>Client</th><th>Company</th><th>Owner</th><th>Status</th><th>Due</th><th></th></tr>
           </thead>
           <tbody>
             <tr data-key="onboard" tabindex="0">
               <td contenteditable>Launch Onboarding Flow</td>
+              <td><select class="input project-client"></select></td>
+              <td><select class="input project-company"></select></td>
               <td contenteditable>Nate</td>
               <td contenteditable>In Progress</td>
               <td contenteditable>2024-06-15</td>
@@ -436,6 +439,8 @@
             </tr>
             <tr data-key="blue" tabindex="0">
               <td contenteditable>Proposal for Blue Sky</td>
+              <td><select class="input project-client"></select></td>
+              <td><select class="input project-company"></select></td>
               <td contenteditable>Priya</td>
               <td contenteditable>Proposal Sent</td>
               <td contenteditable>2024-06-20</td>
@@ -443,6 +448,8 @@
             </tr>
             <tr data-key="acme" tabindex="0">
               <td contenteditable>Kickoff – Acme Co.</td>
+              <td><select class="input project-client"></select></td>
+              <td><select class="input project-company"></select></td>
               <td contenteditable>Jordan</td>
               <td contenteditable>Planning</td>
               <td contenteditable>2024-06-30</td>
@@ -452,6 +459,8 @@
         </table>
         <div class="add-task-row">
           <input class="input" id="new-project-name" placeholder="Project name" style="flex:2" />
+          <select class="input" id="new-project-client" style="flex:1"></select>
+          <select class="input" id="new-project-company" style="flex:1"></select>
           <input class="input" id="new-project-owner" placeholder="Owner" style="flex:1" />
           <input class="input" id="new-project-status" placeholder="Status" style="flex:1" />
           <input type="date" class="input" id="new-project-due" style="flex:1" />
@@ -538,6 +547,8 @@
           <input id="modal-title" class="input" placeholder="Task title" style="margin-bottom:8px" />
           <p class="mini" style="margin-bottom:4px">Due:</p>
           <input type="datetime-local" id="modal-due" class="input" style="margin-bottom:8px" />
+          <p class="mini" id="modal-team-label" style="margin-bottom:4px;display:none">Assign to team member:</p>
+          <select id="modal-team" class="input" style="margin-bottom:8px;display:none"></select>
           <p class="mini" id="modal-client-label" style="margin-bottom:4px;display:none">Assign to client:</p>
           <select id="modal-client" class="input" style="margin-bottom:8px;display:none"></select>
           <textarea id="modal-note" class="input" placeholder="Add notes" style="margin:8px 0"></textarea>
@@ -864,9 +875,16 @@
       }
     }
 
+    const teamMembers = [
+      {id:'team-nate', name:'Nate'},
+      {id:'team-priya', name:'Priya'},
+      {id:'team-jordan', name:'Jordan'}
+    ];
+
       // CRM detail modal
       const clientModal = document.getElementById('client-modal');
       const clientClose = document.getElementById('client-close');
+      const clientDownload = document.getElementById('client-download');
       const clientNameEl = document.getElementById('client-name');
       const clientCompany = document.getElementById('client-company');
       const clientEmail = document.getElementById('client-email');
@@ -1005,6 +1023,26 @@
       }
       if(clientClose){ clientClose.addEventListener('click',()=>{ saveClientDetails(); clientModal.classList.add('hidden'); }); }
       if(clientModal){ clientModal.addEventListener('click', e=>{ if(e.target===clientModal.firstElementChild){ saveClientDetails(); clientModal.classList.add('hidden'); } }); }
+      if(clientDownload){
+        clientDownload.addEventListener('click',()=>{
+          const { jsPDF } = window.jspdf || {};
+          if(!jsPDF){ alert('PDF library not loaded'); return; }
+          const doc = new jsPDF();
+          const lines = [
+            `Name: ${clientNameEl.textContent.trim()}`,
+            `Company: ${clientCompany.textContent.trim()}`,
+            `Email: ${clientEmail.textContent.trim()}`,
+            `Phone: ${clientPhone.textContent.trim()}`,
+            `Stage: ${clientStage.textContent.trim()}`,
+            `Owner: ${clientOwner.textContent.trim()}`,
+            `Address: ${clientAddress.textContent.trim()}`,
+            `Notes: ${clientNotes.value.trim()}`
+          ];
+          let y = 10;
+          lines.forEach(line=>{ doc.text(line,10,y); y+=8; });
+          doc.save(`${clientNameEl.textContent.trim().replace(/\s+/g,'_')}.pdf`);
+        });
+      }
 
     // Project Tasks (Kanban)
     const taskColumns = {
@@ -1020,12 +1058,12 @@
       }
       if(!tasks.length){
         tasks = [
-          {id:1,title:'Launch Onboarding Flow',due:'2024-09-05',status:'todo',checked:false},
-          {id:2,title:'Proposal for Blue Sky Studio',due:'2024-08-28',status:'progress',checked:false},
-          {id:3,title:'Kickoff – Acme Co.',due:'2024-08-20',status:'done',checked:true}
+          {id:1,title:'Launch Onboarding Flow',due:'2024-09-05',status:'todo',checked:false,clientId:'',companyId:'',teamId:''},
+          {id:2,title:'Proposal for Blue Sky Studio',due:'2024-08-28',status:'progress',checked:false,clientId:'',companyId:'',teamId:''},
+          {id:3,title:'Kickoff – Acme Co.',due:'2024-08-20',status:'done',checked:true,clientId:'',companyId:'',teamId:''}
         ];
       }
-      tasks = tasks.map(t=>({...t,checked:!!t.checked, companyId:t.companyId||''}));
+      tasks = tasks.map(t=>({...t,checked:!!t.checked, companyId:t.companyId||'', clientId:t.clientId||'', teamId:t.teamId||''}));
     }
     function saveTasks(){ localStorage.setItem('kanban-tasks', JSON.stringify(tasks)); }
     function updateDashboardTasks(){
@@ -1049,7 +1087,10 @@
         div.draggable = true;
         const assignedName = t.clientId ? (clientTable.querySelector(`#${t.clientId} .client-name`)?.textContent.trim() || '') : t.companyId ? (companyTable.querySelector(`#${t.companyId} td:first-child`)?.textContent.trim() || '') : '';
         const assignedLabel = t.clientId ? 'Client' : t.companyId ? 'Company' : '';
-        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${assignedName?`<div class=\\"mini\\">${assignedLabel}: ${assignedName}</div>`:''}`;
+        const assignedId = t.clientId || t.companyId;
+        const contactLink = assignedName ? `<a href=\"#page-crm\" class=\"crm-link\" data-target=\"${assignedId}\" data-tab=\"${t.clientId?'crm-clients':'crm-companies'}\">${assignedName}</a>` : '';
+        const teamName = teamMembers.find(m=>m.id===t.teamId)?.name || '';
+        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${teamName?`<div class=\\"mini\\">Team: ${teamName}</div>`:''}${contactLink?`<div class=\\"mini\\">${assignedLabel}: ${contactLink}</div>`:''}`;
         col.appendChild(div);
       });
       updateInsights();
@@ -1057,7 +1098,7 @@
     }
     function addTask(status,title,due){
       const id = Date.now();
-      tasks.push({id,title,due,status,checked:status==='done'});
+      tasks.push({id,title,due,status,checked:status==='done',clientId:'',companyId:'',teamId:''});
       saveTasks();
       renderTasks();
     }
@@ -1616,6 +1657,8 @@
       const modalClose = document.getElementById('modal-close');
       const modalClient = document.getElementById('modal-client');
       const modalClientLabel = document.getElementById('modal-client-label');
+      const modalTeam = document.getElementById('modal-team');
+      const modalTeamLabel = document.getElementById('modal-team-label');
       function findCRMContactFromTitle(title){
         const match = title.match(/(?:Call|Email):\s*([^()]+)/i);
         if(match){
@@ -1638,6 +1681,7 @@
             t.due = dueVal?dueVal.split('T')[0]:'';
             t.clientId = '';
             t.companyId = '';
+            t.teamId = modalTeam.value;
             const val = modalClient.value;
             if(val.startsWith('client:')) t.clientId = val.split(':')[1];
             else if(val.startsWith('company:')) t.companyId = val.split(':')[1];
@@ -1705,6 +1749,10 @@
         let html='';
         if(source==='kanban'){
           modalTitle.disabled = false;
+          const teamOpts = teamMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+          modalTeam.innerHTML = `<option value="">Unassigned</option>${teamOpts}`;
+          modalTeam.value = t ? t.teamId : '';
+          modalTeamLabel.style.display = modalTeam.style.display = '';
           const clientOpts = [...clientTable.querySelectorAll('tr')]
             .map(r=>`<option value="client:${r.id}">${r.querySelector('.client-name').textContent.trim()}</option>`).join('');
           const companyOpts = [...companyTable.querySelectorAll('tr')]
@@ -1715,6 +1763,7 @@
           updateModalContactFromSelect();
         }else{
           modalTitle.disabled = true;
+          modalTeamLabel.style.display = modalTeam.style.display = 'none';
           modalClientLabel.style.display = modalClient.style.display = 'none';
           const contact = findCRMContactFromTitle(title);
           if(contact){ html += `<a href="#page-crm" class="crm-link" data-target="${contact.id}">View contact: ${contact.name}</a>`; }
@@ -1745,6 +1794,25 @@
     });
 
     // Project table search and modal
+    function buildClientOptions(){
+      return [...clientTable.querySelectorAll('tr')]
+        .map(r=>`<option value="${r.id}">${r.querySelector('.client-name').textContent.trim()}</option>`).join('');
+    }
+    function buildCompanyOptions(){
+      return [...companyTable.querySelectorAll('tr')]
+        .map(r=>{ if(!r.id) r.id='company-'+Math.random().toString(36).slice(2,9); return `<option value="${r.id}">${r.children[0].textContent.trim()}</option>`; }).join('');
+    }
+    function populateProjectSelects(){
+      const clientOpts = `<option value="">None</option>${buildClientOptions()}`;
+      const companyOpts = `<option value="">None</option>${buildCompanyOptions()}`;
+      document.querySelectorAll('.project-client').forEach(sel=> sel.innerHTML = clientOpts);
+      document.querySelectorAll('.project-company').forEach(sel=> sel.innerHTML = companyOpts);
+      const newClient = document.getElementById('new-project-client');
+      const newCompany = document.getElementById('new-project-company');
+      if(newClient) newClient.innerHTML = clientOpts;
+      if(newCompany) newCompany.innerHTML = companyOpts;
+    }
+    populateProjectSelects();
     const projectSearch = document.getElementById('project-search');
     const projectTableBody = document.querySelector('#project-table tbody');
     const addProjectBtn = document.getElementById('add-project');
@@ -1767,9 +1835,9 @@
     function openProjectModal(row){
       const cells=[...row.children];
       projectTitle.textContent=cells[0].textContent.trim();
-      projectOwner.textContent=cells[1].textContent.trim();
-      projectStatus.textContent=cells[2].textContent.trim();
-      projectDue.textContent=cells[3].textContent.trim();
+      projectOwner.textContent=cells[3].textContent.trim();
+      projectStatus.textContent=cells[4].textContent.trim();
+      projectDue.textContent=cells[5].textContent.trim();
       const data=projectData[row.dataset.key]||{tasks:{todo:[],progress:[],done:[]}};
       projectTodo.innerHTML=data.tasks.todo.map(t=>`<li>${t}</li>`).join('')||'<li class="muted">None</li>';
       projectProgress.innerHTML=data.tasks.progress.map(t=>`<li>${t}</li>`).join('')||'<li class="muted">None</li>';
@@ -1781,8 +1849,12 @@
       projectSearch.addEventListener('input',()=>{
         const q=projectSearch.value.toLowerCase();
         [...projectTableBody.querySelectorAll('tr')].forEach(tr=>{
-          const cells=[...tr.querySelectorAll('td')].slice(0,4);
-          const match=cells.some(td=>td.textContent.toLowerCase().includes(q));
+          const cells=[...tr.querySelectorAll('td')].slice(0,6);
+          const match=cells.some(td=>{
+            const sel=td.querySelector('select');
+            const text=sel? sel.selectedOptions[0]?.textContent || '' : td.textContent;
+            return text.toLowerCase().includes(q);
+          });
           tr.style.display=match?'':'none';
         });
       });
@@ -1790,6 +1862,10 @@
     if(addProjectBtn){
       addProjectBtn.addEventListener('click',()=>{
         const name=document.getElementById('new-project-name').value.trim();
+        const clientSel=document.getElementById('new-project-client');
+        const companySel=document.getElementById('new-project-company');
+        const clientId=clientSel.value;
+        const companyId=companySel.value;
         const owner=document.getElementById('new-project-owner').value.trim();
         const status=document.getElementById('new-project-status').value.trim();
         const due=document.getElementById('new-project-due').value;
@@ -1799,9 +1875,16 @@
         const tr=document.createElement('tr');
         tr.dataset.key=key;
         tr.tabIndex=0;
-        tr.innerHTML=`<td contenteditable>${name}</td><td contenteditable>${owner}</td><td contenteditable>${status}</td><td contenteditable>${due}</td><td><button class="btn link remove-project">Remove</button></td>`;
+        tr.dataset.clientId=clientId;
+        tr.dataset.companyId=companyId;
+        tr.innerHTML=`<td contenteditable>${name}</td><td><select class="input project-client"></select></td><td><select class="input project-company"></select></td><td contenteditable>${owner}</td><td contenteditable>${status}</td><td contenteditable>${due}</td><td><button class="btn link remove-project">Remove</button></td>`;
         projectTableBody.appendChild(tr);
+        populateProjectSelects();
+        tr.querySelector('.project-client').value=clientId;
+        tr.querySelector('.project-company').value=companyId;
         ['new-project-name','new-project-owner','new-project-status','new-project-due'].forEach(id=>document.getElementById(id).value='');
+        clientSel.value='';
+        companySel.value='';
       });
     }
     if(projectTableBody){
