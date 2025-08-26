@@ -59,9 +59,11 @@
     .column{background:var(--bg-alt);border:1px dashed var(--border);border-radius:12px;padding:10px;min-width:300px}
     .column h4{margin:0 0 8px 0}
     .task{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px}
-    .subtask{display:flex;align-items:center;gap:8px;margin:6px 0}
-    .subtask .subtask-title{flex:1}
-    .subtask .subtask-note{flex:1}
+    .subtask{display:flex;flex-direction:column;gap:6px;margin:8px 0;padding:8px;border:1px solid var(--border);border-radius:8px;background:#fff}
+    .subtask-head{display:flex;align-items:center;gap:6px}
+    .subtask-actions{display:flex;gap:6px}
+    .subtask input,.subtask select,.subtask textarea{width:100%}
+    .subtask textarea{min-height:40px;resize:vertical}
     .assistant{background:linear-gradient(180deg,#efe8ff,#fff);border:1px solid var(--border);border-radius:14px;padding:12px}
     .prompt{display:block;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0}
     .prompt:hover{background:var(--purple-100)}
@@ -88,6 +90,7 @@
     .task-col.progress h4{color:var(--purple)}
     .task-col.done{border-color:var(--success);background:#16a34a1a}
     .task-col.done h4{color:var(--success)}
+    .task-col ul{list-style:none;margin:0;padding:0;max-height:200px;overflow-y:auto}
     #chart-tooltip{position:fixed;pointer-events:none;background:#fff;border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:12px;box-shadow:0 2px 4px rgba(17,12,34,.08);display:none}
     footer{padding:30px 20px;color:var(--muted);text-align:center}
     /* Sim.ai chat widget styles */
@@ -1949,7 +1952,7 @@
     function renderSubtasks(arr,status){
       let html='';
       if(arr&&arr.length){
-        html=arr.map((t,i)=>`<li class="subtask" data-index="${i}"><span class="index">${i+1}.</span><input class="input subtask-title" value="${t.title||''}" /><input type="date" class="input subtask-due" value="${t.due||''}" /><select class="input subtask-state"><option value="todo"${(t.status||status)==='todo'?' selected':''}>Need to complete</option><option value="progress"${(t.status||status)==='progress'?' selected':''}>In progress</option><option value="done"${(t.status||status)==='done'?' selected':''}>Completed</option></select><input class="input subtask-note" placeholder="Notes" value="${t.note||''}" /><button class="btn mini reminder-btn" aria-label="Add reminder">\uD83D\uDD14</button><button class="btn mini remove-subtask" aria-label="Remove subtask">\u2715</button></li>`).join('');
+        html=arr.map((t,i)=>`<li class="subtask" data-index="${i}"><div class="subtask-head"><span class="index">${i+1}.</span><input class="input subtask-title" value="${t.title||''}" /></div><input type="date" class="input subtask-due" value="${t.due||''}" /><select class="input subtask-state"><option value="todo"${(t.status||status)==='todo'?' selected':''}>Need to complete</option><option value="progress"${(t.status||status)==='progress'?' selected':''}>In progress</option><option value="done"${(t.status||status)==='done'?' selected':''}>Completed</option></select><textarea class="input subtask-note" placeholder="Notes">${t.note||''}</textarea><div class="subtask-actions"><button class="btn mini reminder-btn" aria-label="Add reminder">\uD83D\uDD14</button><button class="btn mini remove-subtask" aria-label="Remove subtask">\u2715</button></div></li>`).join('');
       }else{
         html='<li class="muted">None</li>';
       }
