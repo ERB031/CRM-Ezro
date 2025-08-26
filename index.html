@@ -59,8 +59,9 @@
     .column{background:var(--bg-alt);border:1px dashed var(--border);border-radius:12px;padding:10px;min-width:300px}
     .column h4{margin:0 0 8px 0}
     .task{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px}
-    .subtask{display:flex;align-items:flex-start;gap:8px;margin:6px 0;flex-wrap:wrap}
-    .subtask textarea{flex:1 1 100%;min-height:40px}
+    .subtask{display:flex;align-items:center;gap:8px;margin:6px 0}
+    .subtask .subtask-title{flex:1}
+    .subtask .subtask-note{flex:1}
     .assistant{background:linear-gradient(180deg,#efe8ff,#fff);border:1px solid var(--border);border-radius:14px;padding:12px}
     .prompt{display:block;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0}
     .prompt:hover{background:var(--purple-100)}
@@ -141,6 +142,7 @@
       <div class="brand"><div class="brand-logo" aria-label="Logo">∑</div> CRM/PM/AI MVP</div>
       <nav id="nav"></nav>
       <input type="search" id="global-search" class="search" placeholder="Search..." aria-label="Global search" />
+      <button id="help-btn" class="btn link" aria-label="Help">❔</button>
     </div>
   </header>
 
@@ -389,45 +391,6 @@
           </div>
         </div>
       </div>
-      <div class="card" style="margin-top:16px">
-        <h3>Workflow Progress</h3>
-        <canvas id="workflow-chart" width="640" height="180" class="chart"></canvas>
-      </div>
-    </section>
-
-    <!-- DAILY TASKS + WELLNESS -->
-    <section id="page-daily" class="page hidden">
-      <div class="grid grid-2">
-        <div class="card">
-          <h3>Today’s Top Tasks</h3>
-          <div id="daily-list"></div>
-          <div class="add-task-row">
-            <input class="input" id="daily-new-title" placeholder="New task" style="flex:1" />
-            <input type="date" class="input" id="daily-new-due" style="flex:0 0 130px" />
-            <button class="btn" id="daily-add">Add</button>
-          </div>
-          <button class="btn" id="done-day">Mark Done for the Day</button>
-        </div>
-        <div class="card">
-          <h3>Mental Health Trend</h3>
-          <div class="mini muted">Self‑reported 1–5 scale • Past 7 days</div>
-            <svg viewBox="0 0 320 180" class="chart" id="mood-chart" aria-label="Mental health chart">
-              <polyline id="mood-line" fill="none" stroke="#6b46c1" stroke-width="3"></polyline>
-              <g id="mood-dots" fill="#6b46c1"></g>
-            </svg>
-          <div class="grid" style="margin-top:10px">
-            <select id="mood-today" class="input">
-              <option value="5">Today’s mood: 5 (Great)</option>
-              <option value="4">4</option>
-              <option value="3">3</option>
-              <option value="2">2</option>
-              <option value="1">1</option>
-            </select>
-            <button class="btn secondary" id="log-mood">Log Mood (Demo)</button>
-          </div>
-          <p class="mini muted">This is a visual demo; logging won’t persist beyond this session.</p>
-        </div>
-      </div>
       <div class="card" id="projects-card" style="margin-top:16px">
         <h3>All Active Projects</h3>
         <input class="input" id="project-search" placeholder="Search projects" style="margin-bottom:8px" />
@@ -475,6 +438,41 @@
           <button class="btn" id="add-project">Add</button>
         </div>
       </div>
+    </section>
+
+    <!-- DAILY TASKS + WELLNESS -->
+    <section id="page-daily" class="page hidden">
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Today’s Top Tasks</h3>
+          <div id="daily-list"></div>
+          <div class="add-task-row">
+            <input class="input" id="daily-new-title" placeholder="New task" style="flex:1" />
+            <input type="date" class="input" id="daily-new-due" style="flex:0 0 130px" />
+            <button class="btn" id="daily-add">Add</button>
+          </div>
+          <button class="btn" id="done-day">Mark Done for the Day</button>
+        </div>
+        <div class="card">
+          <h3>Mental Health Trend</h3>
+          <div class="mini muted">Self‑reported 1–5 scale • Past 7 days</div>
+            <svg viewBox="0 0 320 180" class="chart" id="mood-chart" aria-label="Mental health chart">
+              <polyline id="mood-line" fill="none" stroke="#6b46c1" stroke-width="3"></polyline>
+              <g id="mood-dots" fill="#6b46c1"></g>
+            </svg>
+          <div class="grid" style="margin-top:10px">
+            <select id="mood-today" class="input">
+              <option value="5">Today’s mood: 5 (Great)</option>
+              <option value="4">4</option>
+              <option value="3">3</option>
+              <option value="2">2</option>
+              <option value="1">1</option>
+            </select>
+            <button class="btn secondary" id="log-mood">Log Mood (Demo)</button>
+          </div>
+          <p class="mini muted">This is a visual demo; logging won’t persist beyond this session.</p>
+        </div>
+      </div>
       <div class="card" style="margin-top:16px;text-align:center">
         <button class="btn" id="start-survey">🌱 Employee Wellness Survey</button>
         <p class="mini" style="margin-top:8px"><a href="https://www.youtube.com/watch?v=EBxV9YDEtAk" target="_blank" rel="noopener">Try this office stretch</a></p>
@@ -496,6 +494,10 @@
           <canvas id="completed-chart" width="320" height="180" class="chart"></canvas>
           <ul id="completed-list" class="mini"></ul>
         </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Workflow Progress</h3>
+        <canvas id="workflow-chart" width="640" height="180" class="chart"></canvas>
       </div>
       <div class="card" style="margin-top:16px">
         <h3>Workload Balance</h3>
@@ -663,15 +665,15 @@
           <div class="grid grid-3 mini" style="margin:12px 0">
             <div class="task-col todo">
               <h4>To Do</h4>
-              <ul id="project-todo"></ul>
+              <ul id="project-todo" data-status="todo"></ul>
             </div>
             <div class="task-col progress">
               <h4>In Progress</h4>
-              <ul id="project-progress"></ul>
+              <ul id="project-progress" data-status="progress"></ul>
             </div>
             <div class="task-col done">
               <h4>Done</h4>
-              <ul id="project-done"></ul>
+              <ul id="project-done" data-status="done"></ul>
             </div>
           </div>
           <div class="linkrow" style="justify-content:center;margin-top:10px">
@@ -720,6 +722,9 @@
         if(e.key==='Enter'){ alert(`Search for: ${globalSearch.value}`); }
       });
     }
+
+    const helpBtn = document.getElementById('help-btn');
+    if(helpBtn){ helpBtn.addEventListener('click',()=>alert('Help is coming soon (demo)')); }
 
     function showPage(hash){
       document.querySelectorAll('.page').forEach(el=>el.classList.add('hidden'));
@@ -1852,22 +1857,28 @@
     const projectDone = document.getElementById('project-done');
 
     const projectData = {
-      onboard:{tasks:{todo:['Send welcome email'],progress:['Compile documents'],done:['Kickoff call']},prompts:['Draft onboarding checklist','Suggest welcome email text','Outline first-week tasks']},
-      blue:{tasks:{todo:['Review requirements'],progress:['Write proposal'],done:['Initial consultation']},prompts:['Summarize client needs','Draft proposal outline','Plan follow-up steps']},
-      acme:{tasks:{todo:['Schedule kickoff'],progress:['Prepare agenda'],done:['Signed contract']},prompts:['Create kickoff agenda','Identify key stakeholders','Estimate project timeline']}
+      onboard:{tasks:{todo:[{title:'Send welcome email',note:'',due:'',status:'todo'}],progress:[{title:'Compile documents',note:'',due:'',status:'progress'}],done:[{title:'Kickoff call',note:'',due:'',status:'done'}]},prompts:['Draft onboarding checklist','Suggest welcome email text','Outline first-week tasks']},
+      blue:{tasks:{todo:[{title:'Review requirements',note:'',due:'',status:'todo'}],progress:[{title:'Write proposal',note:'',due:'',status:'progress'}],done:[{title:'Initial consultation',note:'',due:'',status:'done'}]},prompts:['Summarize client needs','Draft proposal outline','Plan follow-up steps']},
+      acme:{tasks:{todo:[{title:'Schedule kickoff',note:'',due:'',status:'todo'}],progress:[{title:'Prepare agenda',note:'',due:'',status:'progress'}],done:[{title:'Signed contract',note:'',due:'',status:'done'}]},prompts:['Create kickoff agenda','Identify key stakeholders','Estimate project timeline']}
     };
 
+    let currentProjectKey='';
     function openProjectModal(row){
       const cells=[...row.children];
       projectTitle.textContent=cells[0].textContent.trim();
       projectOwner.textContent=cells[3].textContent.trim();
       projectStatus.textContent=cells[4].textContent.trim();
       projectDue.textContent=cells[5].textContent.trim();
-      const data=projectData[row.dataset.key]||{tasks:{todo:[],progress:[],done:[]}};
-      projectTodo.innerHTML=renderSubtasks(data.tasks.todo,'need');
+      currentProjectKey=row.dataset.key;
+      renderProjectLists();
+      projectModal.classList.remove('hidden');
+    }
+
+    function renderProjectLists(){
+      const data=projectData[currentProjectKey]||{tasks:{todo:[],progress:[],done:[]}};
+      projectTodo.innerHTML=renderSubtasks(data.tasks.todo,'todo');
       projectProgress.innerHTML=renderSubtasks(data.tasks.progress,'progress');
       projectDone.innerHTML=renderSubtasks(data.tasks.done,'done');
-      projectModal.classList.remove('hidden');
     }
 
     if(projectSearch){
@@ -1936,10 +1947,50 @@
     }
     if(projectClose){ projectClose.addEventListener('click',()=>projectModal.classList.add('hidden')); }
     function renderSubtasks(arr,status){
-      if(!arr||!arr.length) return '<li class="muted">None</li>';
-      return arr.map((t,i)=>`<li class="subtask"><span>${i+1}.</span><span class="task" style="flex:1">${t}</span><select class="input subtask-state"><option value="need"${status==='need'?' selected':''}>Need to complete</option><option value="progress"${status==='progress'?' selected':''}>In progress</option><option value="done"${status==='done'?' selected':''}>Completed</option></select><button class="btn mini reminder-btn" aria-label="Add reminder">\uD83D\uDD14</button><textarea placeholder="Notes"></textarea></li>`).join('');
+      let html='';
+      if(arr&&arr.length){
+        html=arr.map((t,i)=>`<li class="subtask" data-index="${i}"><span class="index">${i+1}.</span><input class="input subtask-title" value="${t.title||''}" /><input type="date" class="input subtask-due" value="${t.due||''}" /><select class="input subtask-state"><option value="todo"${(t.status||status)==='todo'?' selected':''}>Need to complete</option><option value="progress"${(t.status||status)==='progress'?' selected':''}>In progress</option><option value="done"${(t.status||status)==='done'?' selected':''}>Completed</option></select><input class="input subtask-note" placeholder="Notes" value="${t.note||''}" /><button class="btn mini reminder-btn" aria-label="Add reminder">\uD83D\uDD14</button><button class="btn mini remove-subtask" aria-label="Remove subtask">\u2715</button></li>`).join('');
+      }else{
+        html='<li class="muted">None</li>';
+      }
+      html += '<li><button class="btn mini add-subtask">Add Subtask</button></li>';
+      return html;
     }
-    if(projectModal){ projectModal.addEventListener('click',e=>{ if(e.target===projectModal.firstElementChild){ projectModal.classList.add('hidden'); } if(e.target.classList.contains('reminder-btn')){ alert('Reminder added (demo)'); } }); }
+    if(projectModal){
+      projectModal.addEventListener('click',e=>{
+        if(e.target===projectModal.firstElementChild){ projectModal.classList.add('hidden'); return; }
+        if(e.target.classList.contains('reminder-btn')){ alert('Reminder added (demo)'); return; }
+        if(e.target.classList.contains('add-subtask')){
+          const status=e.target.closest('ul').dataset.status;
+          projectData[currentProjectKey].tasks[status].push({title:'',note:'',due:'',status});
+          renderProjectLists();
+          return;
+        }
+        if(e.target.classList.contains('remove-subtask')){
+          const li=e.target.closest('li');
+          const ul=li.parentElement; const status=ul.dataset.status; const idx=+li.dataset.index;
+          projectData[currentProjectKey].tasks[status].splice(idx,1);
+          renderProjectLists();
+        }
+      });
+      projectModal.addEventListener('input',e=>{
+        const li=e.target.closest('li.subtask');
+        if(!li) return;
+        const ul=li.parentElement; const status=ul.dataset.status; const idx=+li.dataset.index;
+        const item=projectData[currentProjectKey].tasks[status][idx];
+        if(e.target.classList.contains('subtask-title')) item.title=e.target.value;
+        if(e.target.classList.contains('subtask-note')) item.note=e.target.value;
+        if(e.target.classList.contains('subtask-due')) item.due=e.target.value;
+        if(e.target.classList.contains('subtask-state')){
+          const newStatus=e.target.value; item.status=newStatus;
+          if(newStatus!==status){
+            projectData[currentProjectKey].tasks[status].splice(idx,1);
+            projectData[currentProjectKey].tasks[newStatus].push(item);
+            renderProjectLists();
+          }
+        }
+      });
+    }
 
     // Done for the Day overlay
     const doneBtn = document.getElementById('done-day');
