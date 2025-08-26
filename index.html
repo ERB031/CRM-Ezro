@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CRM/PM/AI MVP – Multi‑Page Prototype</title>
+  <title>EZRO – Multi‑Page Prototype</title>
   <style>
     :root{
       --bg: #ffffff;
@@ -93,8 +93,8 @@
     .task-col ul{list-style:none;margin:0;padding:0;max-height:200px;overflow-y:auto}
     #chart-tooltip{position:fixed;pointer-events:none;background:#fff;border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:12px;box-shadow:0 2px 4px rgba(17,12,34,.08);display:none}
     footer{padding:30px 20px;color:var(--muted);text-align:center}
-    /* Sim.ai chat widget styles */
-    #sim-widget{
+    /* EZRO helper chat widget styles */
+    #help-widget{
       position:fixed;
       bottom:20px;
       right:20px;
@@ -109,27 +109,27 @@
       overflow:hidden;
       font-size:14px;
     }
-    #sim-widget-header{
+    #help-widget-header{
       background:var(--purple);
       color:#fff;
       padding:8px 10px;
       font-weight:600;
     }
-    #sim-widget-messages{
+    #help-widget-messages{
       flex:1;
       padding:8px;
       overflow-y:auto;
     }
-    #sim-widget-input{
+    #help-widget-input{
       display:flex;
       border-top:1px solid var(--border);
     }
-    #sim-widget-input input{
+    #help-widget-input input{
       flex:1;
       border:none;
       padding:8px;
     }
-    #sim-widget-input button{
+    #help-widget-input button{
       border:none;
       background:var(--purple);
       color:#fff;
@@ -142,7 +142,7 @@
 <body>
   <header>
     <div class="topbar">
-      <div class="brand"><div class="brand-logo" aria-label="Logo">∑</div> CRM/PM/AI MVP</div>
+      <div class="brand"><div class="brand-logo" aria-label="Logo">∑</div> EZRO</div>
       <nav id="nav"></nav>
       <input type="search" id="global-search" class="search" placeholder="Search..." aria-label="Global search" />
       <button id="help-btn" class="btn link" aria-label="Help">❔</button>
@@ -2003,80 +2003,51 @@
     if(closeDone){ closeDone.addEventListener('click', ()=> overlay.classList.add('hidden')); }
   </script>
 
-<script>
-const PROXY_URL = '/.netlify/functions/run-crm-assistant';
-async function sendCRM(message) {
-  const res = await fetch(PROXY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input: message })
-  });
-  const dataText = await res.text();
-  let data;
-  try {
-    data = JSON.parse(dataText);
-  } catch {
-    data = { raw: dataText };
-  }
-  if (!res.ok) {
-    const err = new Error(
-      (data && (data.error || data.message)) || `HTTP ${res.status}`
-    );
-    err.raw = dataText;
-    throw err;
-  }
-  return data;
-}
-// Example usage:
-// sendCRM("Create a task for client 123: demo on 2025-09-01 17:00Z").then(console.log);
-// Or test directly:
-// fetch(PROXY_URL, {
-//   method: 'POST',
-//   headers: { 'Content-Type': 'application/json' },
-//   body: JSON.stringify({ input: "I'm kinda tired" })
-// }).then(r => r.text()).then(console.log).catch(console.error);
-</script>
-
-<!-- Sim.ai chat widget -->
-<div id="sim-widget">
-  <div id="sim-widget-header">CRM Assistant</div>
-  <div id="sim-widget-messages"></div>
-  <form id="sim-widget-input">
-    <input type="text" placeholder="Ask CRM Assistant..." />
+<!-- EZRO helper chatbot -->
+<div id="help-widget">
+  <div id="help-widget-header">EZRO Help</div>
+  <div id="help-widget-messages"></div>
+  <form id="help-widget-input">
+    <input type="text" placeholder="Ask for help or advice..." />
     <button type="submit">Send</button>
   </form>
 </div>
 <script>
-const messagesEl = document.getElementById('sim-widget-messages');
-const formEl = document.getElementById('sim-widget-input');
-const inputEl = formEl.querySelector('input');
+const helpMessages = document.getElementById('help-widget-messages');
+const helpForm = document.getElementById('help-widget-input');
+const helpInput = helpForm.querySelector('input');
 
-function append(role, text) {
+function helpAppend(role, text) {
   const div = document.createElement('div');
   div.style.margin = '6px 0';
   div.innerHTML = `<strong>${role}:</strong> ${text}`;
-  messagesEl.appendChild(div);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  helpMessages.appendChild(div);
+  helpMessages.scrollTop = helpMessages.scrollHeight;
 }
 
-async function sendMessage(message) {
-  append('You', message);
-  inputEl.value = '';
-  try {
-    const data = await sendCRM(message);
-    const reply =
-      data?.data?.message || data?.message || data?.raw || 'No response';
-    append('Assistant', reply);
-  } catch (e) {
-    append('Assistant', 'Error: ' + e.message);
-    console.error('Raw response:', e.raw);
+function getHelpResponse(message) {
+  const m = message.toLowerCase();
+  if (m.includes('add task')) {
+    addTask('todo', 'Chatbot task', new Date().toISOString().split('T')[0]);
+    return 'Added a sample task to your TODO list. Edit it as needed.';
   }
+  if (m.includes('task'))
+    return 'Use the "+" buttons in each column to add tasks or select a template.';
+  if (m.includes('client'))
+    return 'Manage clients from the Clients tab using the navigation bar.';
+  if (m.includes('project'))
+    return 'Projects can be organized in the Projects section; open the Projects tab to get started.';
+  return 'You can ask me about tasks, clients, or projects for quick tips.';
 }
 
-formEl.addEventListener('submit', (e) => {
+helpForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const msg = inputEl.value.trim();
-  if (msg) sendMessage(msg);
+  const msg = helpInput.value.trim();
+  if (!msg) return;
+  helpAppend('You', msg);
+  const reply = getHelpResponse(msg);
+  helpAppend('Assistant', reply);
+  helpInput.value = '';
 });
 </script>
 
