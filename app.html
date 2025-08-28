@@ -203,12 +203,13 @@
 
     <!-- CRM SNAPSHOT -->
     <section id="page-crm" class="page hidden">
-      <div class="linkrow" id="crm-tabs" style="margin-bottom:12px">
-        <button class="btn crm-tab active" data-target="crm-clients">Clients</button>
-        <button class="btn crm-tab" data-target="crm-companies">Companies</button>
-      </div>
-      <div id="crm-clients">
-        <div class="grid grid-2 crm-grid">
+      <div class="card" id="crm-box">
+        <div class="linkrow" id="crm-tabs" style="margin-bottom:12px">
+          <button class="btn crm-tab active" data-target="crm-clients">Clients</button>
+          <button class="btn crm-tab" data-target="crm-companies">Companies</button>
+        </div>
+        <div id="crm-clients">
+          <div class="grid grid-2 crm-grid">
           <div class="card">
             <h3>Clients <span class="pill">Editable</span></h3>
             <input class="input" id="client-search" placeholder="Search clients" style="margin-bottom:8px" />
@@ -264,9 +265,8 @@
             <p class="mini muted" style="margin-top:8px">Edits are inline. “Save Changes” stores a local copy in your browser for demo purposes.</p>
           </div>
         </div>
-      </div>
-      <div id="crm-companies" class="hidden">
-        <div class="grid grid-2 crm-grid">
+        <div id="crm-companies" class="hidden">
+          <div class="grid grid-2 crm-grid">
           <div class="card">
             <h3>Companies <span class="pill">Editable</span></h3>
             <input class="input" id="company-search" placeholder="Search companies" style="margin-bottom:8px" />
