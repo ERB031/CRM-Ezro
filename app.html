@@ -218,32 +218,35 @@
             <input class="input" id="client-search" placeholder="Search clients" style="margin-bottom:8px" />
             <table class="table" id="client-table">
               <thead>
-                <tr><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Stage</th><th>Owner</th></tr>
+                <tr><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Stage</th><th>Owner</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 <tr id="crm-alex" data-address="123 Peachtree Rd, Atlanta, GA" data-notes="">
-                  <td contenteditable class="client-name">Alex Rivera</td>
-                  <td contenteditable>Zenith Group</td>
-                  <td contenteditable>alex@zenithgrp.com</td>
-                  <td contenteditable>(404) 555‑0101</td>
+                  <td class="client-name">Alex Rivera</td>
+                  <td>Zenith Group</td>
+                  <td>alex@zenithgrp.com</td>
+                  <td>(404) 555‑0101</td>
                   <td data-stage><select class="input stage-select"><option selected>Lead</option><option>Discovery</option><option>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
-                  <td contenteditable>Nate</td>
+                  <td>Nate</td>
+                  <td><button class="btn mini edit-client">Edit</button></td>
                 </tr>
                 <tr id="crm-priya" data-address="500 Midtown Ave, Atlanta, GA" data-notes="">
-                  <td contenteditable class="client-name">Priya Shah</td>
-                  <td contenteditable>Blue Sky Studio</td>
-                  <td contenteditable>priya@blueskystudio.io</td>
-                  <td contenteditable>(470) 555‑0199</td>
+                  <td class="client-name">Priya Shah</td>
+                  <td>Blue Sky Studio</td>
+                  <td>priya@blueskystudio.io</td>
+                  <td>(470) 555‑0199</td>
                   <td data-stage><select class="input stage-select"><option>Lead</option><option>Discovery</option><option selected>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
-                  <td contenteditable>Nate</td>
+                  <td>Nate</td>
+                  <td><button class="btn mini edit-client">Edit</button></td>
                 </tr>
                 <tr id="crm-acme" data-address="42 Industrial Way, Atlanta, GA" data-notes="">
-                  <td contenteditable class="client-name">Jordan Lee</td>
-                  <td contenteditable>Acme Co.</td>
-                  <td contenteditable>jordan@acmeco.com</td>
-                  <td contenteditable>(678) 555‑0147</td>
+                  <td class="client-name">Jordan Lee</td>
+                  <td>Acme Co.</td>
+                  <td>jordan@acmeco.com</td>
+                  <td>(678) 555‑0147</td>
                   <td data-stage><select class="input stage-select"><option>Lead</option><option>Discovery</option><option>Proposal</option><option>Negotiation</option><option selected>Won</option></select></td>
-                  <td contenteditable>Nate</td>
+                  <td>Nate</td>
+                  <td><button class="btn mini edit-client">Edit</button></td>
                 </tr>
               </tbody>
             </table>
@@ -265,7 +268,7 @@
                 <button class="btn link" data-nav="#page-cover">Back to Cover</button>
               </div>
             </div>
-            <p class="mini muted" style="margin-top:8px">Edits are inline. “Save Changes” stores a local copy in your browser for demo purposes.</p>
+            <p class="mini muted" style="margin-top:8px">Edits open in a pop‑up window. “Save Changes” stores a local copy in your browser for demo purposes.</p>
           </div>
         </div>
       </div>
@@ -276,22 +279,24 @@
             <input class="input" id="company-search" placeholder="Search companies" style="margin-bottom:8px" />
             <table class="table" id="company-table">
               <thead>
-                <tr><th>Company</th><th>Industry</th><th>Website</th><th>Stage</th><th>Owner</th></tr>
+                <tr><th>Company</th><th>Industry</th><th>Website</th><th>Stage</th><th>Owner</th><th>Actions</th></tr>
               </thead>
               <tbody>
                   <tr id="company-zenith">
-                    <td contenteditable>Zenith Group</td>
-                  <td contenteditable>Finance</td>
-                  <td contenteditable>zenithgrp.com</td>
+                    <td>Zenith Group</td>
+                  <td>Finance</td>
+                  <td>zenithgrp.com</td>
                   <td data-stage><select class="input stage-select"><option>Lead</option><option>Discovery</option><option selected>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
-                  <td contenteditable>Nate</td>
+                  <td>Nate</td>
+                  <td><button class="btn mini edit-company">Edit</button></td>
                 </tr>
                   <tr id="company-blue">
-                    <td contenteditable>Blue Sky Studio</td>
-                  <td contenteditable>Design</td>
-                  <td contenteditable>blueskystudio.io</td>
+                    <td>Blue Sky Studio</td>
+                  <td>Design</td>
+                  <td>blueskystudio.io</td>
                   <td data-stage><select class="input stage-select"><option selected>Lead</option><option>Discovery</option><option>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
-                  <td contenteditable>Nate</td>
+                  <td>Nate</td>
+                  <td><button class="btn mini edit-company">Edit</button></td>
                 </tr>
               </tbody>
             </table>
@@ -583,6 +588,20 @@
       </div>
     </section>
 
+    <!-- CRM EDIT MODAL -->
+    <section id="crm-edit-modal" class="hidden" aria-hidden="true">
+      <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
+        <div class="card" style="max-width:360px">
+          <h3 id="crm-edit-title">Edit</h3>
+          <div id="crm-edit-fields" class="grid" style="margin-bottom:12px"></div>
+          <div class="linkrow" style="justify-content:flex-end">
+            <button class="btn secondary" id="crm-edit-save">Save</button>
+            <button class="btn link" id="crm-edit-cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- CLIENT DETAIL MODAL -->
     <section id="client-modal" class="hidden" aria-hidden="true">
       <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
@@ -816,15 +835,14 @@
         if(!name||!comp){ alert('Name and Company are required.'); return; }
         const tr=document.createElement('tr');
         tr.id = 'client-'+Date.now();
-        tr.innerHTML=`<td contenteditable class="client-name">${name}</td><td contenteditable>${comp}</td><td contenteditable>${email}</td><td contenteditable>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
+        tr.innerHTML=`<td class="client-name">${name}</td><td>${comp}</td><td>${email}</td><td>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td>${owner}</td><td><button class="btn mini edit-client">Edit</button></td>`;
         clientTable.appendChild(tr);
         addToPipeline(name, comp, stage, tr.id);
-        openClientModal(tr);
         ['new-name','new-company','new-email','new-phone','new-owner'].forEach(id=>document.getElementById(id).value='');
       });
     }
     function serializeClients(){
-      return [...clientTable.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>{
+      return [...clientTable.querySelectorAll('tr')].map(tr=>[...tr.children].slice(0,-1).map(td=>{
         const sel=td.querySelector('select');
         return sel? sel.value : td.textContent;
       }));
@@ -852,11 +870,20 @@
           rows.forEach(cols=>{
             const tr=document.createElement('tr');
             tr.id = 'client-'+Math.random().toString(36).slice(2,9);
-            tr.innerHTML = cols.map((v,i)=> i===4? `<td data-stage>${stageDropdown(v)}</td>` : `<td contenteditable>${v}</td>`).join('');
+            tr.innerHTML = cols.map((v,i)=> i===4? `<td data-stage>${stageDropdown(v)}</td>` : `<td>${v}</td>`).join('')+`<td><button class="btn mini edit-client">Edit</button></td>`;
             clientTable.appendChild(tr);
           });
         }catch(err){ console.warn('Failed to parse saved CRM data', err); }
       }
+    }
+
+    if(clientTable){
+      clientTable.addEventListener('click', e=>{
+        const btn = e.target.closest('.edit-client');
+        if(btn){
+          openCRMEditModal(btn.closest('tr'),'client');
+        }
+      });
     }
 
     // Companies table
@@ -866,6 +893,11 @@
     const companySearch = document.getElementById('company-search');
     if(companyTable){
       companyTable.addEventListener('click',e=>{
+        const editBtn = e.target.closest('.edit-company');
+        if(editBtn){
+          openCRMEditModal(editBtn.closest('tr'),'company');
+          return;
+        }
         const row=e.target.closest('tr');
         if(!row) return;
         const company=row.children[0].textContent.trim();
@@ -881,13 +913,13 @@
         if(!name){ alert('Company name required'); return; }
         const tr=document.createElement('tr');
         tr.id = 'company-'+Date.now();
-        tr.innerHTML=`<td contenteditable>${name}</td><td contenteditable>${industry}</td><td contenteditable>${site}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
+        tr.innerHTML=`<td>${name}</td><td>${industry}</td><td>${site}</td><td data-stage>${stageDropdown(stage)}</td><td>${owner}</td><td><button class="btn mini edit-company">Edit</button></td>`;
         companyTable.appendChild(tr);
         ['new-comp-name','new-comp-industry','new-comp-website','new-comp-owner'].forEach(id=>document.getElementById(id).value='');
       });
     }
     function serializeCompanies(){
-      return [...companyTable.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>{
+      return [...companyTable.querySelectorAll('tr')].map(tr=>[...tr.children].slice(0,-1).map(td=>{
         const sel=td.querySelector('select');
         return sel? sel.value : td.textContent;
       }));
@@ -914,11 +946,67 @@
           rows.forEach(cols=>{
             const tr=document.createElement('tr');
             tr.id = 'company-'+Math.random().toString(36).slice(2,9);
-            tr.innerHTML = cols.map((v,i)=> i===3? `<td data-stage>${stageDropdown(v)}</td>` : `<td contenteditable>${v}</td>`).join('');
+            tr.innerHTML = cols.map((v,i)=> i===3? `<td data-stage>${stageDropdown(v)}</td>` : `<td>${v}</td>`).join('')+`<td><button class="btn mini edit-company">Edit</button></td>`;
             companyTable.appendChild(tr);
           });
         }catch(err){ console.warn('Failed to parse saved companies data', err); }
       }
+    }
+
+    const crmEditModal = document.getElementById('crm-edit-modal');
+    const crmEditTitle = document.getElementById('crm-edit-title');
+    const crmEditFields = document.getElementById('crm-edit-fields');
+    const crmEditSave = document.getElementById('crm-edit-save');
+    const crmEditCancel = document.getElementById('crm-edit-cancel');
+    let crmEditRow = null;
+    let crmEditType = '';
+
+    function openCRMEditModal(row,type){
+      crmEditRow = row; crmEditType = type;
+      crmEditTitle.textContent = type==='client'? 'Edit Client':'Edit Company';
+      const cells = row.children;
+      if(type==='client'){
+        crmEditFields.innerHTML = `
+          <input class="input" id="edit-name" value="${cells[0].textContent.trim()}">
+          <input class="input" id="edit-company" value="${cells[1].textContent.trim()}">
+          <input class="input" id="edit-email" value="${cells[2].textContent.trim()}">
+          <input class="input" id="edit-phone" value="${cells[3].textContent.trim()}">
+          <select id="edit-stage" class="input">${stageOptions.map(o=>`<option ${o===cells[4].querySelector('select').value?'selected':''}>${o}</option>`).join('')}</select>
+          <input class="input" id="edit-owner" value="${cells[5].textContent.trim()}">`;
+      }else{
+        crmEditFields.innerHTML = `
+          <input class="input" id="edit-name" value="${cells[0].textContent.trim()}">
+          <input class="input" id="edit-industry" value="${cells[1].textContent.trim()}">
+          <input class="input" id="edit-website" value="${cells[2].textContent.trim()}">
+          <select id="edit-stage" class="input">${stageOptions.map(o=>`<option ${o===cells[3].querySelector('select').value?'selected':''}>${o}</option>`).join('')}</select>
+          <input class="input" id="edit-owner" value="${cells[4].textContent.trim()}">`;
+      }
+      crmEditModal.classList.remove('hidden');
+    }
+
+    function closeCRMEdit(){ crmEditModal.classList.add('hidden'); }
+    if(crmEditCancel){ crmEditCancel.addEventListener('click', closeCRMEdit); }
+    if(crmEditModal){ crmEditModal.addEventListener('click', e=>{ if(e.target===crmEditModal.firstElementChild) closeCRMEdit(); }); }
+    if(crmEditSave){
+      crmEditSave.addEventListener('click',()=>{
+        if(!crmEditRow) return;
+        const cells = crmEditRow.children;
+        if(crmEditType==='client'){
+          cells[0].textContent = document.getElementById('edit-name').value.trim();
+          cells[1].textContent = document.getElementById('edit-company').value.trim();
+          cells[2].textContent = document.getElementById('edit-email').value.trim();
+          cells[3].textContent = document.getElementById('edit-phone').value.trim();
+          cells[4].querySelector('select').value = document.getElementById('edit-stage').value;
+          cells[5].textContent = document.getElementById('edit-owner').value.trim();
+        }else{
+          cells[0].textContent = document.getElementById('edit-name').value.trim();
+          cells[1].textContent = document.getElementById('edit-industry').value.trim();
+          cells[2].textContent = document.getElementById('edit-website').value.trim();
+          cells[3].querySelector('select').value = document.getElementById('edit-stage').value;
+          cells[4].textContent = document.getElementById('edit-owner').value.trim();
+        }
+        closeCRMEdit();
+      });
     }
 
     const teamMembers = [
