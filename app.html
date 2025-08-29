@@ -413,30 +413,30 @@
           </thead>
           <tbody>
             <tr data-key="onboard" tabindex="0">
-              <td contenteditable>Launch Onboarding Flow</td>
+              <td>Launch Onboarding Flow</td>
               <td><select class="input project-client"></select></td>
               <td><select class="input project-company"></select></td>
-              <td contenteditable>Nate</td>
-              <td contenteditable>In Progress</td>
-              <td contenteditable>2024-06-15</td>
+              <td>Nate</td>
+              <td>In Progress</td>
+              <td>2024-06-15</td>
               <td><button class="btn link remove-project">Remove</button></td>
             </tr>
             <tr data-key="blue" tabindex="0">
-              <td contenteditable>Proposal for Blue Sky</td>
+              <td>Proposal for Blue Sky</td>
               <td><select class="input project-client"></select></td>
               <td><select class="input project-company"></select></td>
-              <td contenteditable>Priya</td>
-              <td contenteditable>Proposal Sent</td>
-              <td contenteditable>2024-06-20</td>
+              <td>Priya</td>
+              <td>Proposal Sent</td>
+              <td>2024-06-20</td>
               <td><button class="btn link remove-project">Remove</button></td>
             </tr>
             <tr data-key="acme" tabindex="0">
-              <td contenteditable>Kickoff – Acme Co.</td>
+              <td>Kickoff – Acme Co.</td>
               <td><select class="input project-client"></select></td>
               <td><select class="input project-company"></select></td>
-              <td contenteditable>Jordan</td>
-              <td contenteditable>Planning</td>
-              <td contenteditable>2024-06-30</td>
+              <td>Jordan</td>
+              <td>Planning</td>
+              <td>2024-06-30</td>
               <td><button class="btn link remove-project">Remove</button></td>
             </tr>
           </tbody>
@@ -685,7 +685,7 @@
     <section id="project-modal" class="hidden" aria-hidden="true">
       <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
         <div class="card" style="max-width:600px;width:90%">
-          <h3 id="project-title"></h3>
+          <h3 id="project-title" contenteditable></h3>
           <p class="mini">Owner: <span id="project-owner"></span> • Status: <span id="project-status"></span></p>
           <p class="mini">Due: <span id="project-due"></span></p>
           <div class="grid grid-3 mini" style="margin:12px 0">
@@ -2042,6 +2042,14 @@
     };
 
     let currentProjectKey='';
+    let currentProjectRow=null;
+    if(projectTitle){
+      projectTitle.addEventListener('input',()=>{
+        if(currentProjectRow){
+          currentProjectRow.children[0].textContent=projectTitle.textContent.trim();
+        }
+      });
+    }
     function openProjectModal(row){
       const cells=[...row.children];
       projectTitle.textContent=cells[0].textContent.trim();
@@ -2049,6 +2057,7 @@
       projectStatus.textContent=cells[4].textContent.trim();
       projectDue.textContent=cells[5].textContent.trim();
       currentProjectKey=row.dataset.key;
+      currentProjectRow=row;
       renderProjectLists();
       projectModal.classList.remove('hidden');
       const card = projectModal.querySelector('.card');
@@ -2059,6 +2068,7 @@
       projectModal.classList.add('hidden');
       const card = projectModal.querySelector('.card');
       if(card) card.classList.remove('scaled');
+      currentProjectRow=null;
     }
 
     function renderProjectLists(){
@@ -2100,7 +2110,7 @@
         tr.tabIndex=0;
         tr.dataset.clientId=clientId;
         tr.dataset.companyId=companyId;
-        tr.innerHTML=`<td contenteditable>${name}</td><td><select class="input project-client"></select></td><td><select class="input project-company"></select></td><td contenteditable>${owner}</td><td contenteditable>${status}</td><td contenteditable>${due}</td><td><button class="btn link remove-project">Remove</button></td>`;
+        tr.innerHTML=`<td>${name}</td><td><select class="input project-client"></select></td><td><select class="input project-company"></select></td><td>${owner}</td><td>${status}</td><td>${due}</td><td><button class="btn link remove-project">Remove</button></td>`;
         projectTableBody.appendChild(tr);
         populateProjectSelects();
         tr.querySelector('.project-client').value=clientId;
