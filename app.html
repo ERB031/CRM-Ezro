@@ -218,7 +218,7 @@
             <input class="input" id="client-search" placeholder="Search clients" style="margin-bottom:8px" />
             <table class="table" id="client-table">
               <thead>
-                <tr><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Stage</th><th>Owner</th><th>Actions</th></tr>
+                <tr><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Stage</th><th>Owner</th></tr>
               </thead>
               <tbody>
                 <tr id="crm-alex" data-address="123 Peachtree Rd, Atlanta, GA" data-notes="">
@@ -228,7 +228,6 @@
                   <td>(404) 555‑0101</td>
                   <td data-stage><select class="input stage-select"><option selected>Lead</option><option>Discovery</option><option>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
                   <td>Nate</td>
-                  <td><button class="btn mini edit-client">Edit</button></td>
                 </tr>
                 <tr id="crm-priya" data-address="500 Midtown Ave, Atlanta, GA" data-notes="">
                   <td class="client-name">Priya Shah</td>
@@ -237,7 +236,6 @@
                   <td>(470) 555‑0199</td>
                   <td data-stage><select class="input stage-select"><option>Lead</option><option>Discovery</option><option selected>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
                   <td>Nate</td>
-                  <td><button class="btn mini edit-client">Edit</button></td>
                 </tr>
                 <tr id="crm-acme" data-address="42 Industrial Way, Atlanta, GA" data-notes="">
                   <td class="client-name">Jordan Lee</td>
@@ -246,7 +244,6 @@
                   <td>(678) 555‑0147</td>
                   <td data-stage><select class="input stage-select"><option>Lead</option><option>Discovery</option><option>Proposal</option><option>Negotiation</option><option selected>Won</option></select></td>
                   <td>Nate</td>
-                  <td><button class="btn mini edit-client">Edit</button></td>
                 </tr>
               </tbody>
             </table>
@@ -279,7 +276,7 @@
             <input class="input" id="company-search" placeholder="Search companies" style="margin-bottom:8px" />
             <table class="table" id="company-table">
               <thead>
-                <tr><th>Company</th><th>Industry</th><th>Website</th><th>Stage</th><th>Owner</th><th>Actions</th></tr>
+                <tr><th>Company</th><th>Industry</th><th>Website</th><th>Stage</th><th>Owner</th></tr>
               </thead>
               <tbody>
                   <tr id="company-zenith">
@@ -288,7 +285,6 @@
                   <td>zenithgrp.com</td>
                   <td data-stage><select class="input stage-select"><option>Lead</option><option>Discovery</option><option selected>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
                   <td>Nate</td>
-                  <td><button class="btn mini edit-company">Edit</button></td>
                 </tr>
                   <tr id="company-blue">
                     <td>Blue Sky Studio</td>
@@ -296,7 +292,6 @@
                   <td>blueskystudio.io</td>
                   <td data-stage><select class="input stage-select"><option selected>Lead</option><option>Discovery</option><option>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
                   <td>Nate</td>
-                  <td><button class="btn mini edit-company">Edit</button></td>
                 </tr>
               </tbody>
             </table>
@@ -835,14 +830,14 @@
         if(!name||!comp){ alert('Name and Company are required.'); return; }
         const tr=document.createElement('tr');
         tr.id = 'client-'+Date.now();
-        tr.innerHTML=`<td class="client-name">${name}</td><td>${comp}</td><td>${email}</td><td>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td>${owner}</td><td><button class="btn mini edit-client">Edit</button></td>`;
+        tr.innerHTML=`<td class="client-name">${name}</td><td>${comp}</td><td>${email}</td><td>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td>${owner}</td>`;
         clientTable.appendChild(tr);
         addToPipeline(name, comp, stage, tr.id);
         ['new-name','new-company','new-email','new-phone','new-owner'].forEach(id=>document.getElementById(id).value='');
       });
     }
     function serializeClients(){
-      return [...clientTable.querySelectorAll('tr')].map(tr=>[...tr.children].slice(0,-1).map(td=>{
+      return [...clientTable.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>{
         const sel=td.querySelector('select');
         return sel? sel.value : td.textContent;
       }));
@@ -870,21 +865,14 @@
           rows.forEach(cols=>{
             const tr=document.createElement('tr');
             tr.id = 'client-'+Math.random().toString(36).slice(2,9);
-            tr.innerHTML = cols.map((v,i)=> i===4? `<td data-stage>${stageDropdown(v)}</td>` : `<td>${v}</td>`).join('')+`<td><button class="btn mini edit-client">Edit</button></td>`;
+            tr.innerHTML = cols.map((v,i)=> i===4? `<td data-stage>${stageDropdown(v)}</td>` : `<td>${v}</td>`).join('');
             clientTable.appendChild(tr);
           });
         }catch(err){ console.warn('Failed to parse saved CRM data', err); }
       }
     }
 
-    if(clientTable){
-      clientTable.addEventListener('click', e=>{
-        const btn = e.target.closest('.edit-client');
-        if(btn){
-          openCRMEditModal(btn.closest('tr'),'client');
-        }
-      });
-    }
+
 
     // Companies table
     const addCompanyBtn = document.getElementById('add-company');
@@ -893,11 +881,6 @@
     const companySearch = document.getElementById('company-search');
     if(companyTable){
       companyTable.addEventListener('click',e=>{
-        const editBtn = e.target.closest('.edit-company');
-        if(editBtn){
-          openCRMEditModal(editBtn.closest('tr'),'company');
-          return;
-        }
         const row=e.target.closest('tr');
         if(!row) return;
         const company=row.children[0].textContent.trim();
@@ -913,13 +896,13 @@
         if(!name){ alert('Company name required'); return; }
         const tr=document.createElement('tr');
         tr.id = 'company-'+Date.now();
-        tr.innerHTML=`<td>${name}</td><td>${industry}</td><td>${site}</td><td data-stage>${stageDropdown(stage)}</td><td>${owner}</td><td><button class="btn mini edit-company">Edit</button></td>`;
+        tr.innerHTML=`<td>${name}</td><td>${industry}</td><td>${site}</td><td data-stage>${stageDropdown(stage)}</td><td>${owner}</td>`;
         companyTable.appendChild(tr);
         ['new-comp-name','new-comp-industry','new-comp-website','new-comp-owner'].forEach(id=>document.getElementById(id).value='');
       });
     }
     function serializeCompanies(){
-      return [...companyTable.querySelectorAll('tr')].map(tr=>[...tr.children].slice(0,-1).map(td=>{
+      return [...companyTable.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>{
         const sel=td.querySelector('select');
         return sel? sel.value : td.textContent;
       }));
@@ -946,7 +929,7 @@
           rows.forEach(cols=>{
             const tr=document.createElement('tr');
             tr.id = 'company-'+Math.random().toString(36).slice(2,9);
-            tr.innerHTML = cols.map((v,i)=> i===3? `<td data-stage>${stageDropdown(v)}</td>` : `<td>${v}</td>`).join('')+`<td><button class="btn mini edit-company">Edit</button></td>`;
+            tr.innerHTML = cols.map((v,i)=> i===3? `<td data-stage>${stageDropdown(v)}</td>` : `<td>${v}</td>`).join('');
             companyTable.appendChild(tr);
           });
         }catch(err){ console.warn('Failed to parse saved companies data', err); }
@@ -1005,6 +988,9 @@
           cells[3].querySelector('select').value = document.getElementById('edit-stage').value;
           cells[4].textContent = document.getElementById('edit-owner').value.trim();
         }
+        if(!clientModal.classList.contains('hidden') && crmEditRow===currentClientRow){
+          openClientModal(crmEditRow, crmEditType==='company');
+        }
         closeCRMEdit();
       });
     }
@@ -1019,6 +1005,7 @@
       const clientModal = document.getElementById('client-modal');
       const clientClose = document.getElementById('client-close');
       const clientDownload = document.getElementById('client-download');
+      const clientEdit = document.getElementById('client-edit');
       const clientNameEl = document.getElementById('client-name');
       const clientCompany = document.getElementById('client-company');
       const clientEmail = document.getElementById('client-email');
@@ -1049,6 +1036,7 @@
       const clientFiles = document.getElementById('client-files');
       const fileUpload = document.getElementById('file-upload');
       let currentClientRow = null;
+      let currentClientIsCompany = false;
       let currentMetrics = [], currentHighlights = [], currentTrainings = [], currentEvents = [], currentWorkflows = [], currentFiles = [];
 
       function renderMetrics(){
@@ -1095,8 +1083,10 @@
       if(addEventBtn){ addEventBtn.addEventListener('click',()=>{ const t=eventText.value.trim(); if(!t) return; currentEvents.push(t); eventText.value=''; renderEvents(); }); }
       if(addWorkflowBtn){ addWorkflowBtn.addEventListener('click',()=>{ const t=workflowText.value.trim(); if(!t) return; currentWorkflows.push(t); workflowText.value=''; renderWorkflows(); }); }
       if(fileUpload){ fileUpload.addEventListener('change',()=>{ [...fileUpload.files].forEach(f=>currentFiles.push(f.name)); fileUpload.value=''; renderFiles(); }); }
+      if(clientEdit){ clientEdit.addEventListener('click',()=>{ saveClientDetails(); openCRMEditModal(currentClientRow, currentClientIsCompany ? 'company' : 'client'); }); }
       function openClientModal(row, isCompany=false){
         currentClientRow = row;
+        currentClientIsCompany = isCompany;
         const cells = row.children;
         if(isCompany){
           clientNameEl.textContent = cells[0].textContent.trim();
