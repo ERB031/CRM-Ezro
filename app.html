@@ -461,24 +461,25 @@
           <button class="btn" id="done-day">Mark Done for the Day</button>
         </div>
         <div class="card">
-          <h3>Mental Health Trend</h3>
-          <div class="mini muted">Self‑reported 1–5 scale • Past 7 days</div>
-            <svg viewBox="0 0 320 180" class="chart" id="mood-chart" aria-label="Mental health chart">
-              <polyline id="mood-line" fill="none" stroke="#6b46c1" stroke-width="3"></polyline>
-              <g id="mood-dots" fill="#6b46c1"></g>
-            </svg>
+          <h3>Workload Check-In</h3>
+          <div class="mini muted">How heavy does your workload feel today?</div>
           <div class="grid" style="margin-top:10px">
-            <select id="mood-today" class="input">
-              <option value="5">Today’s mood: 5 (Great)</option>
-              <option value="4">4</option>
-              <option value="3">3</option>
-              <option value="2">2</option>
-              <option value="1">1</option>
+            <select id="workload-today" class="input">
+              <option value="light">Light</option>
+              <option value="balanced" selected>Balanced</option>
+              <option value="overwhelming">Overwhelming</option>
             </select>
-            <button class="btn secondary" id="log-mood">Log Mood (Demo)</button>
+            <button class="btn secondary" id="log-workload">Log Check-In</button>
           </div>
-          <p class="mini muted">This is a visual demo; logging won’t persist beyond this session.</p>
+          <p class="mini muted">Balanced streak: <span id="balanced-streak">0</span> days</p>
+          <button class="btn link" id="break-btn" style="margin-top:10px">Need a micro-break?</button>
+          <p class="mini" id="break-output"></p>
         </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Weekly Self-Reflection</h3>
+        <button class="btn" id="weekly-checkin">Start Weekly Reflection</button>
+        <p class="mini" id="reflection-last" style="margin-top:8px"></p>
       </div>
       <div class="card" style="margin-top:16px;text-align:center">
         <button class="btn" id="start-survey">🌱 Employee Wellness Survey</button>
@@ -1234,7 +1235,15 @@
           const title=document.getElementById('daily-new-title').value.trim();
           const due=dailyDueInput.value||todayStr;
           if(!title) return;
-          dailyTasks.push({id:Date.now(),title,due,checked:false});
+          const tasksToday = dailyTasks.filter(t=>t.due===todayStr).length;
+          let finalDue = due;
+          if(tasksToday>=5){
+            const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1); const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            if(confirm("This is probably too much for today. Schedule it for tomorrow?")){
+              finalDue = tomorrowStr;
+            }
+          }
+          dailyTasks.push({id:Date.now(),title,due:finalDue,checked:false});
           saveDaily(); renderDaily();
           document.getElementById('daily-new-title').value='';
           dailyDueInput.value=todayStr;
@@ -1242,6 +1251,55 @@
       }
       loadDaily();
       renderDaily();
+
+      // Workload check-in & micro-breaks
+      const workloadSelect = document.getElementById('workload-today');
+      const logWorkload = document.getElementById('log-workload');
+      const balancedStreak = document.getElementById('balanced-streak');
+      function getWorkloadLog(){
+        const saved = localStorage.getItem('workload-log');
+        return saved ? JSON.parse(saved) : {};
+      }
+      function saveWorkloadLog(log){ localStorage.setItem('workload-log', JSON.stringify(log)); }
+      function calcBalancedStreak(log){
+        let streak = 0; const d=new Date();
+        while(true){
+          const key=d.toISOString().split('T')[0];
+          if(log[key]==='balanced'){ streak++; d.setDate(d.getDate()-1); }
+          else break;
+        }
+        return streak;
+      }
+      if(logWorkload){
+        logWorkload.addEventListener('click',()=>{
+          const log=getWorkloadLog();
+          log[todayStr] = workloadSelect.value;
+          saveWorkloadLog(log);
+          balancedStreak.textContent = calcBalancedStreak(log);
+        });
+        balancedStreak.textContent = calcBalancedStreak(getWorkloadLog());
+      }
+      const breakBtn = document.getElementById('break-btn');
+      const breakOutput = document.getElementById('break-output');
+      const breakPrompts = ['Stretch for 1 minute','Drink water','Walk for 2 minutes'];
+      if(breakBtn){ breakBtn.addEventListener('click',()=>{ breakOutput.textContent = breakPrompts[Math.floor(Math.random()*breakPrompts.length)]; }); }
+
+      // Weekly self-reflection
+      const weeklyBtn = document.getElementById('weekly-checkin');
+      const reflectionLast = document.getElementById('reflection-last');
+      if(weeklyBtn){
+        weeklyBtn.addEventListener('click',()=>{
+          const balanced = prompt('Did you feel balanced this week?');
+          const drained = prompt('What drained you most?');
+          if(balanced!==null && drained!==null){
+            const entry={date:todayStr,balanced,drained};
+            localStorage.setItem('weekly-reflection',JSON.stringify(entry));
+            reflectionLast.textContent=`Last: ${entry.date} – ${balanced}; Drain: ${drained}`;
+          }
+        });
+        const saved=localStorage.getItem('weekly-reflection');
+        if(saved){ try{ const entry=JSON.parse(saved); reflectionLast.textContent=`Last: ${entry.date} – ${entry.balanced}; Drain: ${entry.drained}`; }catch{} }
+      }
 
       // Task notes storage
       let taskNotes = {};
@@ -2027,7 +2085,16 @@
     const doneBtn = document.getElementById('done-day');
     const overlay = document.getElementById('overlay-done');
     const closeDone = document.getElementById('close-done');
-    if(doneBtn){ doneBtn.addEventListener('click', ()=> overlay.classList.remove('hidden')); }
+    if(doneBtn){
+      doneBtn.addEventListener('click', ()=>{
+        const win = prompt("What's one win today?");
+        const stop = prompt("Did you stop at a reasonable time?");
+        const reflections = JSON.parse(localStorage.getItem('daily-reflections')||'[]');
+        reflections.push({date: todayStr, win, stop});
+        localStorage.setItem('daily-reflections', JSON.stringify(reflections));
+        overlay.classList.remove('hidden');
+      });
+    }
     if(closeDone){ closeDone.addEventListener('click', ()=> overlay.classList.add('hidden')); }
   </script>
 
