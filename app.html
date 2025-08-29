@@ -139,6 +139,8 @@
       padding:8px 12px;
       cursor:pointer;
     }
+    #task-modal .card{transition:transform .2s ease;}
+    #task-modal .card.scaled{transform:scale(1.2);}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
@@ -1133,8 +1135,8 @@
         const assignedId = t.clientId || t.companyId;
         const contactLink = assignedName ? `<a href=\"#page-crm\" class=\"crm-link\" data-target=\"${assignedId}\" data-tab=\"${t.clientId?'crm-clients':'crm-companies'}\">${assignedName}</a>` : '';
         const teamName = teamMembers.find(m=>m.id===t.teamId)?.name || '';
-        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${t.group?`<div class=\\"mini\\">Group: ${t.group}</div>`:''}${t.owner?`<div class=\\"mini\\">Owner: ${t.owner}</div>`:''}${t.priority?`<div class=\\"mini\\">Priority: ${t.priority}</div>`:''}${teamName?`<div class=\\"mini\\">Team: ${teamName}</div>`:''}${contactLink?`<div class=\\"mini\\">${assignedLabel}: ${contactLink}</div>`:''}`;
-        col.appendChild(div);
+        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div><button class=\"btn mini remove-task\" aria-label=\"Remove task\">\u2715</button></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${t.group?`<div class=\\"mini\\">Group: ${t.group}</div>`:''}${t.owner?`<div class=\\"mini\\">Owner: ${t.owner}</div>`:''}${t.priority?`<div class=\\"mini\\">Priority: ${t.priority}</div>`:''}${teamName?`<div class=\\"mini\\">Team: ${teamName}</div>`:''}${contactLink?`<div class=\\"mini\\">${assignedLabel}: ${contactLink}</div>`:''}`;
+      col.appendChild(div);
       });
       updateInsights();
       renderWorkflow();
@@ -1233,7 +1235,7 @@
           div.className='task'+(t.checked?' checked':'');
           div.dataset.id=t.id;
           const linkHTML = t.link ? `<div class="mini"><a href="${t.link}" target="_blank">Learn more</a></div>` : '';
-          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div contenteditable class="task-title">${t.title}</div><button class="btn mini move-up" aria-label="Move up">↑</button><button class="btn mini move-down" aria-label="Move down">↓</button></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${linkHTML}`;
+          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div contenteditable class="task-title">${t.title}</div><button class="btn mini move-up" aria-label="Move up">↑</button><button class="btn mini move-down" aria-label="Move down">↓</button><button class="btn mini remove-task" aria-label="Remove task">✕</button></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${linkHTML}`;
           dailyList.appendChild(div);
         });
         updateDashboardTasks();
@@ -1266,6 +1268,24 @@
           }
           saveDaily();
           renderDaily();
+        } else if(e.target.classList.contains('remove-task')){
+          const taskEl=e.target.closest('.task');
+          const id=Number(taskEl.dataset.id);
+          let idx=dailyTasks.findIndex(t=>t.id===id);
+          if(idx>-1){
+            dailyTasks.splice(idx,1);
+            saveDaily();
+            renderDaily();
+          } else {
+            idx=tasks.findIndex(t=>t.id===id);
+            if(idx>-1){
+              tasks.splice(idx,1);
+              saveTasks();
+              renderTasks();
+              updateInsights();
+              renderWorkflow();
+            }
+          }
         }
       });
 
@@ -1770,6 +1790,8 @@
           if(upcoming[idx]){ upcoming[idx].time = dueVal; saveUpcoming(); renderUpcoming(); }
         }
         taskModal.classList.add('hidden');
+        const card = taskModal.querySelector('.card');
+        if(card) card.classList.remove('scaled');
       }
       if(taskModal){
         taskModal.addEventListener('click', e=>{ if(e.target===taskModal.firstElementChild){ saveTaskModal(); } });
@@ -1848,19 +1870,21 @@
         taskModal.dataset.source = source;
         taskModal.dataset.id = id;
         taskModal.classList.remove('hidden');
+        const card = taskModal.querySelector('.card');
+        if(card) card.classList.add('scaled');
       }
     }
 
     const dailyListEl = document.getElementById('daily-list');
     if(dailyListEl){
-      dailyListEl.addEventListener('click',e=>{
+      dailyListEl.addEventListener('dblclick',e=>{
         if(e.target.closest('.checkbox')||e.target.tagName==='A') return;
         const taskEl = e.target.closest('.task');
         if(taskEl) openTaskDetails(taskEl);
       });
     }
 
-    document.addEventListener('click', e=>{
+    document.addEventListener('dblclick', e=>{
       if(e.target.closest('#daily-list')||e.target.closest('.checkbox')||e.target.closest('.remove-upcoming')||e.target.classList.contains('up-time')||e.target.classList.contains('task-due')||e.target.hasAttribute('contenteditable')||e.target.closest('[contenteditable]')||e.target.tagName==='A') return;
       const taskEl = e.target.closest('.task');
       if(!taskEl || taskEl.closest('#task-modal')) return;
