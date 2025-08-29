@@ -47,6 +47,7 @@
     .btn.secondary{background:#fff;color:var(--purple);border:1px solid var(--purple)}
     .btn.link{background:transparent;color:var(--purple);border:none;padding:0}
     .btn.mini{color:#fff}
+    .btn.link.remove-project{color:#fff}
     .input, select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
     .table{width:100%;border-collapse:separate;border-spacing:0 8px}
     .table th{color:var(--muted);font-weight:600;text-align:left;padding:6px 8px}
@@ -142,6 +143,8 @@
     }
     #task-modal .card{transition:transform .2s ease;}
     #task-modal .card.scaled{transform:scale(1.5);}
+    #project-modal .card{transition:transform .2s ease;}
+    #project-modal .card.scaled{transform:scale(1.75);}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
@@ -2048,6 +2051,14 @@
       currentProjectKey=row.dataset.key;
       renderProjectLists();
       projectModal.classList.remove('hidden');
+      const card = projectModal.querySelector('.card');
+      if(card) card.classList.add('scaled');
+    }
+
+    function closeProjectModal(){
+      projectModal.classList.add('hidden');
+      const card = projectModal.querySelector('.card');
+      if(card) card.classList.remove('scaled');
     }
 
     function renderProjectLists(){
@@ -2121,7 +2132,7 @@
         }
       });
     }
-    if(projectClose){ projectClose.addEventListener('click',()=>projectModal.classList.add('hidden')); }
+    if(projectClose){ projectClose.addEventListener('click',closeProjectModal); }
     function renderSubtasks(arr,status){
       let html='';
       if(arr&&arr.length){
@@ -2134,7 +2145,7 @@
     }
     if(projectModal){
       projectModal.addEventListener('click',e=>{
-        if(e.target===projectModal.firstElementChild){ projectModal.classList.add('hidden'); return; }
+        if(e.target===projectModal.firstElementChild){ closeProjectModal(); return; }
         if(e.target.classList.contains('reminder-btn')){ alert('Reminder added (demo)'); return; }
         if(e.target.classList.contains('add-subtask')){
           const status=e.target.closest('ul').dataset.status;
