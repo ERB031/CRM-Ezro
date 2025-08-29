@@ -37,6 +37,7 @@ The plugin will create four frames with clickable hotspots: Board v1 → Wellnes
 ## Notes
 - This uses Figma Plugin API to create nodes and set `reactions` for prototype links.
 - Ensure **Internet access is not required** to run — everything is local.
+- This project embraces an agile mindset; iterate in small steps and refine copy using agile framing.
 
 
 ## License
