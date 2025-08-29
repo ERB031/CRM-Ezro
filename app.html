@@ -472,6 +472,7 @@
             <button class="btn secondary" id="log-workload">Log Check-In</button>
           </div>
           <p class="mini muted">Balanced streak: <span id="balanced-streak">0</span> days</p>
+          <canvas id="workload-graph" width="320" height="120" class="chart" style="margin-top:10px"></canvas>
           <button class="btn link" id="break-btn" style="margin-top:10px">Need a micro-break?</button>
           <p class="mini" id="break-output"></p>
         </div>
@@ -759,6 +760,9 @@
 
     // On load
     showPage(location.hash || '#page-cover');
+
+    const workloadGraphCtx = document.getElementById('workload-graph')?.getContext('2d');
+    const workloadCtx = document.getElementById('workload-chart')?.getContext('2d');
 
     // CRM tabs
     document.querySelectorAll('.crm-tab').forEach(btn=>{
@@ -1221,8 +1225,19 @@
           const div=document.createElement('div');
           div.className='task'+(t.checked?' checked':'');
           div.dataset.id=t.id;
+          div.draggable=true;
           const linkHTML = t.link ? `<div class="mini"><a href="${t.link}" target="_blank">Learn more</a></div>` : '';
-          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div contenteditable class="task-title">${t.title}</div><button class="btn link move-up" aria-label="Move up">↑</button><button class="btn link move-down" aria-label="Move down">↓</button></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${linkHTML}`;
+          let contactHTML='';
+          if(t.clientId){
+            const row=clientTable.querySelector(`#${t.clientId}`);
+            const name=row?row.querySelector('.client-name').textContent.trim():'';
+            contactHTML=name?`<div class="mini"><a href="#page-crm" class="crm-link" data-target="${t.clientId}" data-tab="crm-clients">Client: ${name}</a></div>`:'';
+          }else if(t.companyId){
+            const row=companyTable.querySelector(`#${t.companyId}`);
+            const name=row?row.children[0].textContent.trim():'';
+            contactHTML=name?`<div class="mini"><a href="#page-crm" class="crm-link" data-target="${t.companyId}" data-tab="crm-companies">Company: ${name}</a></div>`:'';
+          }
+          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div contenteditable class="task-title">${t.title}</div></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${contactHTML}${linkHTML}`;
           dailyList.appendChild(div);
         });
         updateDashboardTasks();
@@ -1276,8 +1291,10 @@
           log[todayStr] = workloadSelect.value;
           saveWorkloadLog(log);
           balancedStreak.textContent = calcBalancedStreak(log);
+          updateWorkloadCharts();
         });
         balancedStreak.textContent = calcBalancedStreak(getWorkloadLog());
+        updateWorkloadCharts();
       }
       const breakBtn = document.getElementById('break-btn');
       const breakOutput = document.getElementById('break-output');
@@ -1387,6 +1404,7 @@
           completedList.innerHTML = completed.length ? completed.map(t=>`<li>${t.title}</li>`).join('') : '<li>None</li>';
         }
         renderCharts();
+        updateWorkloadCharts();
       }
 
       const barData = {};
@@ -1401,7 +1419,6 @@
         const completedCtx = document.getElementById('completed-chart')?.getContext('2d');
         const personalCtx = document.getElementById('personal-mood-chart')?.getContext('2d');
         const teamCtx = document.getElementById('team-mood-chart')?.getContext('2d');
-        const workloadCtx = document.getElementById('workload-chart')?.getContext('2d');
         const revenueCtx = document.getElementById('revenue-chart')?.getContext('2d');
         const timeCtx = document.getElementById('time-chart')?.getContext('2d');
         const labels = ['Sep 1','Sep 2','Sep 3','Sep 4','Sep 5'];
@@ -1409,7 +1426,6 @@
         const dayLabels = ['Mon','Tue','Wed','Thu','Fri'];
         if(overdueCtx){ drawBars(overdueCtx, [3,5,2,4,6], '#ef4444', labels); }
         if(completedCtx){ drawBars(completedCtx, [1,3,5,4,7], '#16a34a', labels); }
-        if(workloadCtx){ drawBars(workloadCtx, [6,7,5,8,6], '#4f46e5', labels); }
         if(personalCtx){ drawBars(personalCtx, moodData, '#6b46c1', moodLabels.slice(-moodData.length)); }
         if(teamCtx){ drawBars(teamCtx, [3,4,2,5,4,3,4], '#8b5cf6', moodLabels); }
         if(revenueCtx){ drawBars(revenueCtx, [200,350,150,400,500], '#4f46e5', dayLabels); }
@@ -1483,6 +1499,16 @@
           ctx.canvas.addEventListener('mouseleave',()=> tooltip.style.display='none');
           ctx.canvas.dataset.tooltipAttached='1';
         }
+      }
+
+      function updateWorkloadCharts(){
+        const log=getWorkloadLog();
+        const entries=Object.entries(log).sort((a,b)=>a[0].localeCompare(b[0])).slice(-7);
+        const labels=entries.map(e=>e[0].slice(5));
+        const map={light:1,balanced:2,overwhelming:3};
+        const data=entries.map(e=>map[e[1]]||0);
+        if(workloadGraphCtx){ drawBars(workloadGraphCtx,data,'#4f46e5',labels); }
+        if(workloadCtx){ drawBars(workloadCtx,data,'#4f46e5',labels); }
       }
 
       function renderWorkflow(){
@@ -1795,7 +1821,15 @@
           }
         }else if(source==='daily'){
           const d = dailyTasks.find(x=>x.id===Number(id));
-          if(d){ d.due = dueVal?dueVal.split('T')[0]:''; saveDaily(); renderDaily(); }
+          if(d){
+            d.title = modalTitle.value.trim();
+            d.due = dueVal?dueVal.split('T')[0]:'';
+            d.clientId=''; d.companyId='';
+            const val = modalClient.value;
+            if(val.startsWith('client:')) d.clientId = val.split(':')[1];
+            else if(val.startsWith('company:')) d.companyId = val.split(':')[1];
+            saveDaily(); renderDaily();
+          }
         }else if(source==='upcoming'){
           const idx = Number(id);
           if(upcoming[idx]){ upcoming[idx].time = dueVal; saveUpcoming(); renderUpcoming(); }
@@ -1852,20 +1886,29 @@
         modalDue.value = due ? (due.includes('T')?due:due+'T00:00') : '';
         modalNote.value = taskNotes[key] || '';
         let html='';
-        if(source==='kanban'){
+        if(source==='kanban' || source==='daily'){
           modalTitle.disabled = false;
-          const teamOpts = teamMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
-          modalTeam.innerHTML = `<option value="">Unassigned</option>${teamOpts}`;
-          modalTeam.value = t ? t.teamId : '';
-          modalTeamLabel.style.display = modalTeam.style.display = '';
           const clientOpts = [...clientTable.querySelectorAll('tr')]
             .map(r=>`<option value="client:${r.id}">${r.querySelector('.client-name').textContent.trim()}</option>`).join('');
           const companyOpts = [...companyTable.querySelectorAll('tr')]
             .map(r=>{ if(!r.id) r.id='company-'+Math.random().toString(36).slice(2,9); return `<option value="company:${r.id}">${r.children[0].textContent.trim()}</option>`; }).join('');
           modalClient.innerHTML = `<option value="">Unassigned</option><optgroup label="Clients">${clientOpts}</optgroup><optgroup label="Companies">${companyOpts}</optgroup>`;
-          modalClient.value = t && t.clientId ? `client:${t.clientId}` : t && t.companyId ? `company:${t.companyId}` : '';
+          let clientVal='';
+          if(source==='kanban'){
+            const teamOpts = teamMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+            modalTeam.innerHTML = `<option value="">Unassigned</option>${teamOpts}`;
+            modalTeam.value = t ? t.teamId : '';
+            modalTeamLabel.style.display = modalTeam.style.display = '';
+            clientVal = t && t.clientId ? `client:${t.clientId}` : t && t.companyId ? `company:${t.companyId}` : '';
+          }else{
+            modalTeamLabel.style.display = modalTeam.style.display = 'none';
+            const d = dailyTasks.find(x=>x.id===id);
+            clientVal = d && d.clientId ? `client:${d.clientId}` : d && d.companyId ? `company:${d.companyId}` : '';
+          }
+          modalClient.value = clientVal;
           modalClientLabel.style.display = modalClient.style.display = '';
           updateModalContactFromSelect();
+          if(article){ modalContact.innerHTML += `${modalContact.innerHTML?'<br/>':''}<a href="${article}" target="_blank">Wellness article</a>`; }
         }else{
           modalTitle.disabled = true;
           modalTeamLabel.style.display = modalTeam.style.display = 'none';
@@ -1884,29 +1927,46 @@
 
     const dailyListEl = document.getElementById('daily-list');
     if(dailyListEl){
-      dailyListEl.addEventListener('click',e=>{
-        if(e.target.classList.contains('move-up')||e.target.classList.contains('move-down')){
-          const taskEl = e.target.closest('.task');
-          const id = Number(taskEl.dataset.id);
-          const idx = dailyTasks.findIndex(t=>t.id===id);
-          if(e.target.classList.contains('move-up') && idx>0){
-            [dailyTasks[idx-1], dailyTasks[idx]] = [dailyTasks[idx], dailyTasks[idx-1]];
-            saveDaily(); renderDaily();
-          }
-          if(e.target.classList.contains('move-down') && idx<dailyTasks.length-1){
-            [dailyTasks[idx+1], dailyTasks[idx]] = [dailyTasks[idx], dailyTasks[idx+1]];
-            saveDaily(); renderDaily();
-          }
-          return;
-        }
+      let dragging=null;
+      function getAfterElement(container,y){
+        const els=[...container.querySelectorAll('.task:not(.dragging)')];
+        return els.reduce((closest,child)=>{
+          const box=child.getBoundingClientRect();
+          const offset=y-box.top-box.height/2;
+          if(offset<0 && offset>closest.offset){ return {offset, element:child}; }
+          else return closest;
+        },{offset:-Infinity}).element;
+      }
+      dailyListEl.addEventListener('dragstart',e=>{
+        const t=e.target.closest('.task');
+        if(!t) return;
+        dragging=t; t.classList.add('dragging');
+        e.dataTransfer.effectAllowed='move';
+      });
+      dailyListEl.addEventListener('dragend',()=>{
+        if(!dragging) return;
+        dragging.classList.remove('dragging');
+        const order=[...dailyListEl.querySelectorAll('.task')].map(el=>Number(el.dataset.id));
+        dailyTasks.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
+        saveDaily(); renderDaily();
+        dragging=null;
+      });
+      dailyListEl.addEventListener('dragover',e=>{
+        e.preventDefault();
+        const after=getAfterElement(dailyListEl,e.clientY);
+        if(!dragging) return;
+        if(after==null){ dailyListEl.appendChild(dragging); }
+        else{ dailyListEl.insertBefore(dragging,after); }
+      });
+      dailyListEl.addEventListener('dblclick',e=>{
         if(e.target.closest('.checkbox')||e.target.tagName==='A') return;
-        const taskEl = e.target.closest('.task');
+        const taskEl=e.target.closest('.task');
         if(taskEl) openTaskDetails(taskEl);
       });
     }
 
     document.addEventListener('click', e=>{
-      if(e.target.closest('#daily-list')||e.target.closest('.checkbox')||e.target.closest('.remove-upcoming')||e.target.classList.contains('up-time')||e.target.classList.contains('task-due')||e.target.hasAttribute('contenteditable')||e.target.closest('[contenteditable]')||e.target.tagName==='A'||e.target.classList.contains('move-up')||e.target.classList.contains('move-down')) return;
+      if(e.target.closest('#daily-list')||e.target.closest('.checkbox')||e.target.closest('.remove-upcoming')||e.target.classList.contains('up-time')||e.target.classList.contains('task-due')||e.target.hasAttribute('contenteditable')||e.target.closest('[contenteditable]')||e.target.tagName==='A') return;
       const taskEl = e.target.closest('.task');
       if(!taskEl || taskEl.closest('#task-modal')) return;
       openTaskDetails(taskEl);
@@ -2022,10 +2082,9 @@
           }
           return;
         }
-      });
-      projectTableBody.addEventListener('dblclick',e=>{
+        if(e.target.closest('select')) return;
         const row=e.target.closest('tr[data-key]');
-        if(row){openProjectModal(row);}
+        if(row){ openProjectModal(row); }
       });
       projectTableBody.addEventListener('keydown',e=>{
         if(e.key==='Enter'){
