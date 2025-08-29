@@ -61,6 +61,7 @@
     .column{background:var(--bg-alt);border:1px dashed var(--border);border-radius:12px;padding:10px;min-width:300px}
     .column h4{margin:0 0 8px 0}
     .task{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px;cursor:grab}
+    .task.dragging{opacity:.5}
     #daily-list .task-title{user-select:none}
     .subtask{display:flex;flex-direction:column;gap:6px;margin:8px 0;padding:8px;border:1px solid var(--border);border-radius:8px;background:#fff}
     .subtask-head{display:flex;align-items:center;gap:6px}
@@ -1254,9 +1255,13 @@
           const tasksToday = dailyTasks.filter(t=>t.due===todayStr).length;
           let finalDue = due;
           if(tasksToday>=5){
-            const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1); const tomorrowStr = tomorrow.toISOString().split('T')[0];
-            if(confirm("This is probably too much for today. Schedule it for tomorrow?")){
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate()+1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            if(confirm("This is probably too much for today. Schedule it for tomorrow instead?")){
               finalDue = tomorrowStr;
+            } else {
+              return;
             }
           }
           dailyTasks.push({id:Date.now(),title,due:finalDue,checked:false});
@@ -1587,6 +1592,7 @@
     }
     const addUpcoming=document.getElementById('add-upcoming');
     const upcomingDateInput=document.getElementById('upcoming-date');
+    const upcomingTitleInput=document.getElementById('upcoming-title');
     if(upcomingDateInput){ upcomingDateInput.value=new Date().toISOString().slice(0,16); }
     if(addUpcoming){
       addUpcoming.addEventListener('click',()=>{
@@ -1598,6 +1604,11 @@
         document.getElementById('upcoming-title').value='';
         upcomingDateInput.value=new Date().toISOString().slice(0,16);
       });
+      if(upcomingTitleInput){
+        upcomingTitleInput.addEventListener('keydown',e=>{
+          if(e.key==='Enter') addUpcoming.click();
+        });
+      }
     }
     if(upcomingList){
       upcomingList.addEventListener('click',e=>{
