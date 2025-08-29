@@ -583,20 +583,6 @@
       </div>
     </section>
 
-    <!-- CRM EDIT MODAL -->
-    <section id="crm-edit-modal" class="hidden" aria-hidden="true">
-      <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
-        <div class="card" style="max-width:360px">
-          <h3 id="crm-edit-title">Edit</h3>
-          <div id="crm-edit-fields" class="grid" style="margin-bottom:12px"></div>
-          <div class="linkrow" style="justify-content:flex-end">
-            <button class="btn secondary" id="crm-edit-save">Save</button>
-            <button class="btn link" id="crm-edit-cancel">Cancel</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- CLIENT DETAIL MODAL -->
     <section id="client-modal" class="hidden" aria-hidden="true">
       <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
@@ -613,10 +599,18 @@
                 </div>
               </div>
               <p><strong id="client-name"></strong></p>
+              <input class="input hidden" id="client-name-input" />
               <p class="mini" id="client-company"></p>
+              <input class="input hidden" id="client-company-input" />
               <p class="mini" id="client-email"></p>
+              <input class="input hidden" id="client-email-input" />
               <p class="mini" id="client-phone"></p>
-              <p class="mini">Stage: <span id="client-stage"></span> • Owner: <span id="client-owner"></span></p>
+              <input class="input hidden" id="client-phone-input" />
+              <p class="mini" id="client-stage-row">Stage: <span id="client-stage"></span> • Owner: <span id="client-owner"></span></p>
+              <div id="client-stage-edit" class="hidden" style="margin-bottom:6px">
+                <select id="client-stage-input" class="input"></select>
+                <input id="client-owner-input" class="input" placeholder="Owner" style="margin-top:6px" />
+              </div>
               <p class="mini">Address:</p>
               <div id="client-address" contenteditable class="input" style="margin-bottom:6px"></div>
               <p class="mini"><a id="client-map" href="#" target="_blank">View on map</a></p>
@@ -936,64 +930,6 @@
       }
     }
 
-    const crmEditModal = document.getElementById('crm-edit-modal');
-    const crmEditTitle = document.getElementById('crm-edit-title');
-    const crmEditFields = document.getElementById('crm-edit-fields');
-    const crmEditSave = document.getElementById('crm-edit-save');
-    const crmEditCancel = document.getElementById('crm-edit-cancel');
-    let crmEditRow = null;
-    let crmEditType = '';
-
-    function openCRMEditModal(row,type){
-      crmEditRow = row; crmEditType = type;
-      crmEditTitle.textContent = type==='client'? 'Edit Client':'Edit Company';
-      const cells = row.children;
-      if(type==='client'){
-        crmEditFields.innerHTML = `
-          <input class="input" id="edit-name" value="${cells[0].textContent.trim()}">
-          <input class="input" id="edit-company" value="${cells[1].textContent.trim()}">
-          <input class="input" id="edit-email" value="${cells[2].textContent.trim()}">
-          <input class="input" id="edit-phone" value="${cells[3].textContent.trim()}">
-          <select id="edit-stage" class="input">${stageOptions.map(o=>`<option ${o===cells[4].querySelector('select').value?'selected':''}>${o}</option>`).join('')}</select>
-          <input class="input" id="edit-owner" value="${cells[5].textContent.trim()}">`;
-      }else{
-        crmEditFields.innerHTML = `
-          <input class="input" id="edit-name" value="${cells[0].textContent.trim()}">
-          <input class="input" id="edit-industry" value="${cells[1].textContent.trim()}">
-          <input class="input" id="edit-website" value="${cells[2].textContent.trim()}">
-          <select id="edit-stage" class="input">${stageOptions.map(o=>`<option ${o===cells[3].querySelector('select').value?'selected':''}>${o}</option>`).join('')}</select>
-          <input class="input" id="edit-owner" value="${cells[4].textContent.trim()}">`;
-      }
-      crmEditModal.classList.remove('hidden');
-    }
-
-    function closeCRMEdit(){ crmEditModal.classList.add('hidden'); }
-    if(crmEditCancel){ crmEditCancel.addEventListener('click', closeCRMEdit); }
-    if(crmEditModal){ crmEditModal.addEventListener('click', e=>{ if(e.target===crmEditModal.firstElementChild) closeCRMEdit(); }); }
-    if(crmEditSave){
-      crmEditSave.addEventListener('click',()=>{
-        if(!crmEditRow) return;
-        const cells = crmEditRow.children;
-        if(crmEditType==='client'){
-          cells[0].textContent = document.getElementById('edit-name').value.trim();
-          cells[1].textContent = document.getElementById('edit-company').value.trim();
-          cells[2].textContent = document.getElementById('edit-email').value.trim();
-          cells[3].textContent = document.getElementById('edit-phone').value.trim();
-          cells[4].querySelector('select').value = document.getElementById('edit-stage').value;
-          cells[5].textContent = document.getElementById('edit-owner').value.trim();
-        }else{
-          cells[0].textContent = document.getElementById('edit-name').value.trim();
-          cells[1].textContent = document.getElementById('edit-industry').value.trim();
-          cells[2].textContent = document.getElementById('edit-website').value.trim();
-          cells[3].querySelector('select').value = document.getElementById('edit-stage').value;
-          cells[4].textContent = document.getElementById('edit-owner').value.trim();
-        }
-        if(!clientModal.classList.contains('hidden') && crmEditRow===currentClientRow){
-          openClientModal(crmEditRow, crmEditType==='company');
-        }
-        closeCRMEdit();
-      });
-    }
 
     const teamMembers = [
       {id:'team-nate', name:'Nate'},
@@ -1012,6 +948,14 @@
       const clientPhone = document.getElementById('client-phone');
       const clientStage = document.getElementById('client-stage');
       const clientOwner = document.getElementById('client-owner');
+      const clientNameInput = document.getElementById('client-name-input');
+      const clientCompanyInput = document.getElementById('client-company-input');
+      const clientEmailInput = document.getElementById('client-email-input');
+      const clientPhoneInput = document.getElementById('client-phone-input');
+      const clientStageRow = document.getElementById('client-stage-row');
+      const clientStageEdit = document.getElementById('client-stage-edit');
+      const clientStageInput = document.getElementById('client-stage-input');
+      const clientOwnerInput = document.getElementById('client-owner-input');
       const clientAddress = document.getElementById('client-address');
       const clientNotes = document.getElementById('client-notes');
       const clientFollowup = document.getElementById('client-followup');
@@ -1037,6 +981,7 @@
       const fileUpload = document.getElementById('file-upload');
       let currentClientRow = null;
       let currentClientIsCompany = false;
+      let clientEditing = false;
       let currentMetrics = [], currentHighlights = [], currentTrainings = [], currentEvents = [], currentWorkflows = [], currentFiles = [];
 
       function renderMetrics(){
@@ -1083,10 +1028,91 @@
       if(addEventBtn){ addEventBtn.addEventListener('click',()=>{ const t=eventText.value.trim(); if(!t) return; currentEvents.push(t); eventText.value=''; renderEvents(); }); }
       if(addWorkflowBtn){ addWorkflowBtn.addEventListener('click',()=>{ const t=workflowText.value.trim(); if(!t) return; currentWorkflows.push(t); workflowText.value=''; renderWorkflows(); }); }
       if(fileUpload){ fileUpload.addEventListener('change',()=>{ [...fileUpload.files].forEach(f=>currentFiles.push(f.name)); fileUpload.value=''; renderFiles(); }); }
-      if(clientEdit){ clientEdit.addEventListener('click',()=>{ saveClientDetails(); openCRMEditModal(currentClientRow, currentClientIsCompany ? 'company' : 'client'); }); }
+      if(clientEdit){
+        clientEdit.addEventListener('click',()=>{
+          if(!currentClientRow) return;
+          if(!clientEditing){
+            clientEditing = true;
+            clientEdit.textContent = 'Save';
+            clientNameInput.value = clientNameEl.textContent.trim();
+            clientCompanyInput.value = currentClientIsCompany ? clientCompany.textContent.replace(/^Industry:\s*/,'').trim() : clientCompany.textContent.trim();
+            clientEmailInput.value = clientEmail.textContent.trim();
+            clientPhoneInput.value = clientPhone.textContent.trim();
+            clientStageInput.innerHTML = stageOptions.map(o=>`<option ${o===clientStage.textContent.trim()?'selected':''}>${o}</option>`).join('');
+            clientOwnerInput.value = clientOwner.textContent.trim();
+            clientNameEl.parentElement.classList.add('hidden');
+            clientNameInput.classList.remove('hidden');
+            clientCompany.classList.add('hidden');
+            clientCompanyInput.classList.remove('hidden');
+            clientEmail.classList.add('hidden');
+            clientEmailInput.classList.remove('hidden');
+            clientPhone.classList.add('hidden');
+            clientPhoneInput.classList.remove('hidden');
+            clientStageRow.classList.add('hidden');
+            clientStageEdit.classList.remove('hidden');
+          }else{
+            clientEditing = false;
+            clientEdit.textContent = 'Edit';
+            const name = clientNameInput.value.trim();
+            const comp = clientCompanyInput.value.trim();
+            const email = clientEmailInput.value.trim();
+            const phone = clientPhoneInput.value.trim();
+            const stageVal = clientStageInput.value;
+            const owner = clientOwnerInput.value.trim();
+            clientNameEl.textContent = name;
+            if(currentClientIsCompany){
+              clientCompany.textContent = `Industry: ${comp}`;
+              clientEmail.innerHTML = `<a href="http://${email}" target="_blank">${email}</a>`;
+              clientPhone.textContent = '';
+              const cells = currentClientRow.children;
+              cells[0].textContent = name;
+              cells[1].textContent = comp;
+              cells[2].textContent = email;
+              cells[3].querySelector('select').value = stageVal;
+              cells[4].textContent = owner;
+            }else{
+              clientCompany.textContent = comp;
+              clientEmail.innerHTML = `<a href="mailto:${email}">${email}</a>`;
+              clientPhone.textContent = phone;
+              const cells = currentClientRow.children;
+              cells[0].textContent = name;
+              cells[1].textContent = comp;
+              cells[2].textContent = email;
+              cells[3].textContent = phone;
+              cells[4].querySelector('select').value = stageVal;
+              cells[5].textContent = owner;
+            }
+            clientStage.textContent = stageVal;
+            clientOwner.textContent = owner;
+            clientNameEl.parentElement.classList.remove('hidden');
+            clientNameInput.classList.add('hidden');
+            clientCompany.classList.remove('hidden');
+            clientCompanyInput.classList.add('hidden');
+            clientEmail.classList.remove('hidden');
+            clientEmailInput.classList.add('hidden');
+            clientPhone.classList.remove('hidden');
+            clientPhoneInput.classList.add('hidden');
+            clientStageRow.classList.remove('hidden');
+            clientStageEdit.classList.add('hidden');
+            saveClientDetails();
+          }
+        });
+      }
       function openClientModal(row, isCompany=false){
         currentClientRow = row;
         currentClientIsCompany = isCompany;
+        clientEditing = false;
+        if(clientEdit) clientEdit.textContent = 'Edit';
+        clientNameEl.parentElement.classList.remove('hidden');
+        clientNameInput.classList.add('hidden');
+        clientCompany.classList.remove('hidden');
+        clientCompanyInput.classList.add('hidden');
+        clientEmail.classList.remove('hidden');
+        clientEmailInput.classList.add('hidden');
+        clientPhone.classList.remove('hidden');
+        clientPhoneInput.classList.add('hidden');
+        clientStageRow.classList.remove('hidden');
+        clientStageEdit.classList.add('hidden');
         const cells = row.children;
         if(isCompany){
           clientNameEl.textContent = cells[0].textContent.trim();
