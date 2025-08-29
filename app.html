@@ -60,13 +60,14 @@
     .column{background:var(--bg-alt);border:1px dashed var(--border);border-radius:12px;padding:10px;min-width:300px}
     .column h4{margin:0 0 8px 0}
     .task{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px}
+    .task-title{flex:1;word-break:break-word}
     .subtask{display:flex;flex-direction:column;gap:6px;margin:8px 0;padding:8px;border:1px solid var(--border);border-radius:8px;background:#fff}
-    .subtask-head{display:flex;align-items:center;gap:6px}
+    .subtask-head{display:flex;align-items:flex-start;gap:6px}
     .subtask-actions{display:flex;gap:6px}
     .subtask input,.subtask select,.subtask textarea{width:100%}
     .subtask textarea{min-height:40px;resize:vertical}
     .assistant{background:linear-gradient(180deg,#efe8ff,#fff);border:1px solid var(--border);border-radius:14px;padding:12px}
-    .prompt{display:block;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0}
+    .prompt{display:block;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0;cursor:pointer}
     .prompt:hover{background:var(--purple-100)}
     #project-table tbody tr{cursor:pointer}
     .kpi{display:flex;align-items:center;justify-content:space-between}
@@ -388,12 +389,12 @@
         </div>
         <div class="card assistant">
           <h3>AI Assistant (Prompts)</h3>
-          <a class="prompt" target="_blank" rel="noopener" href="https://chat.openai.com/?q=Prioritize%20my%20tasks%20for%20today%20based%20on%20due%20dates%20and%20client%20impact.">“Prioritize my tasks for today based on due dates and client impact.”</a>
-          <a class="prompt" target="_blank" rel="noopener" href="https://chat.openai.com/?q=Draft%20a%20follow-up%20email%20to%20Priya%20Shah%20at%20Blue%20Sky%20Studio%20about%20the%20proposal.">“Draft a follow‑up email to <em>Priya Shah at Blue Sky Studio</em> about the proposal.”</a>
-          <a class="prompt" target="_blank" rel="noopener" href="https://chat.openai.com/?q=Summarize%20yesterday%E2%80%99s%20activity%20for%20Jordan%20Lee%20(Acme%20Co.)%20and%20suggest%20next%20steps.">“Summarize yesterday’s activity for <em>Jordan Lee (Acme Co.)</em> and suggest next steps.”</a>
-          <a class="prompt" target="_blank" rel="noopener" href="https://chat.openai.com/?q=Generate%203%20wellness%20nudges%20for%20a%20busy%20day%20with%20back-to-back%20calls.">“Generate 3 wellness nudges for a busy day with back‑to‑back calls.”</a>
-          <a class="prompt" target="_blank" rel="noopener" href="https://chat.openai.com/?q=Create%20a%20checklist%20to%20launch%20the%20onboarding%20flow%20this%20week.">“Create a checklist to launch the onboarding flow this week.”</a>
-          <div class="notice mini">Non‑functional demo: prompts are static for prototype purposes.</div>
+          <button type="button" class="prompt" data-message="Prioritize my tasks for today based on due dates and client impact.">“Prioritize my tasks for today based on due dates and client impact.”</button>
+          <button type="button" class="prompt" data-message="Draft a follow-up email to Priya Shah at Blue Sky Studio about the proposal.">“Draft a follow‑up email to <em>Priya Shah at Blue Sky Studio</em> about the proposal.”</button>
+          <button type="button" class="prompt" data-message="Summarize yesterday’s activity for Jordan Lee (Acme Co.) and suggest next steps.">“Summarize yesterday’s activity for <em>Jordan Lee (Acme Co.)</em> and suggest next steps.”</button>
+          <button type="button" class="prompt" data-message="Generate 3 wellness nudges for a busy day with back-to-back calls.">“Generate 3 wellness nudges for a busy day with back‑to‑back calls.”</button>
+          <button type="button" class="prompt" data-message="Create a checklist to launch the onboarding flow this week.">“Create a checklist to launch the onboarding flow this week.”</button>
+          <div class="notice mini">Click a prompt to ask EZRO Help.</div>
           <div class="linkrow" style="margin-top:8px">
             <button class="btn" data-nav="#page-crm">View CRM</button>
             <button class="btn secondary" data-nav="#page-daily">Go to Daily Tasks</button>
@@ -1235,7 +1236,7 @@
           div.className='task'+(t.checked?' checked':'');
           div.dataset.id=t.id;
           const linkHTML = t.link ? `<div class="mini"><a href="${t.link}" target="_blank">Learn more</a></div>` : '';
-          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div contenteditable class="task-title">${t.title}</div><button class="btn mini move-up" aria-label="Move up">↑</button><button class="btn mini move-down" aria-label="Move down">↓</button><button class="btn mini remove-task" aria-label="Remove task">✕</button></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${linkHTML}`;
+          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div contenteditable class="task-title">${t.title}</div><button class="btn mini note-task" aria-label="Add note">📝</button><button class="btn mini move-up" aria-label="Move up">↑</button><button class="btn mini move-down" aria-label="Move down">↓</button><button class="btn mini remove-task" aria-label="Remove task">✕</button></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${linkHTML}`;
           dailyList.appendChild(div);
         });
         updateDashboardTasks();
@@ -1256,38 +1257,41 @@
       }
       loadDaily();
       renderDaily();
-      document.addEventListener('click',e=>{
-        if(e.target.classList.contains('move-up')||e.target.classList.contains('move-down')){
-          const taskEl=e.target.closest('.task');
-          const id=Number(taskEl.dataset.id);
-          const idx=dailyTasks.findIndex(t=>t.id===id);
-          if(e.target.classList.contains('move-up') && idx>0){
-            [dailyTasks[idx-1],dailyTasks[idx]]=[dailyTasks[idx],dailyTasks[idx-1]];
-          }else if(e.target.classList.contains('move-down') && idx<dailyTasks.length-1){
-            [dailyTasks[idx+1],dailyTasks[idx]]=[dailyTasks[idx],dailyTasks[idx+1]];
-          }
-          saveDaily();
-          renderDaily();
-        } else if(e.target.classList.contains('remove-task')){
-          const taskEl=e.target.closest('.task');
-          const id=Number(taskEl.dataset.id);
-          let idx=dailyTasks.findIndex(t=>t.id===id);
-          if(idx>-1){
-            dailyTasks.splice(idx,1);
+        document.addEventListener('click',e=>{
+          if(e.target.classList.contains('move-up')||e.target.classList.contains('move-down')){
+            const taskEl=e.target.closest('.task');
+            const id=Number(taskEl.dataset.id);
+            const idx=dailyTasks.findIndex(t=>t.id===id);
+            if(e.target.classList.contains('move-up') && idx>0){
+              [dailyTasks[idx-1],dailyTasks[idx]]=[dailyTasks[idx],dailyTasks[idx-1]];
+            }else if(e.target.classList.contains('move-down') && idx<dailyTasks.length-1){
+              [dailyTasks[idx+1],dailyTasks[idx]]=[dailyTasks[idx],dailyTasks[idx+1]];
+            }
             saveDaily();
             renderDaily();
-          } else {
-            idx=tasks.findIndex(t=>t.id===id);
+          } else if(e.target.classList.contains('remove-task')){
+            const taskEl=e.target.closest('.task');
+            const id=Number(taskEl.dataset.id);
+            let idx=dailyTasks.findIndex(t=>t.id===id);
             if(idx>-1){
-              tasks.splice(idx,1);
-              saveTasks();
-              renderTasks();
-              updateInsights();
-              renderWorkflow();
+              dailyTasks.splice(idx,1);
+              saveDaily();
+              renderDaily();
+            } else {
+              idx=tasks.findIndex(t=>t.id===id);
+              if(idx>-1){
+                tasks.splice(idx,1);
+                saveTasks();
+                renderTasks();
+                updateInsights();
+                renderWorkflow();
+              }
             }
+          } else if(e.target.classList.contains('note-task')){
+            const taskEl=e.target.closest('.task');
+            if(taskEl) openTaskDetails(taskEl);
           }
-        }
-      });
+        });
 
       // Task notes storage
       let taskNotes = {};
@@ -2017,7 +2021,7 @@
     function renderSubtasks(arr,status){
       let html='';
       if(arr&&arr.length){
-        html=arr.map((t,i)=>`<li class="subtask" data-index="${i}"><div class="subtask-head"><span class="index">${i+1}.</span><input class="input subtask-title" value="${t.title||''}" /></div><input type="date" class="input subtask-due" value="${t.due||''}" /><select class="input subtask-state"><option value="todo"${(t.status||status)==='todo'?' selected':''}>Need to complete</option><option value="progress"${(t.status||status)==='progress'?' selected':''}>In progress</option><option value="done"${(t.status||status)==='done'?' selected':''}>Completed</option></select><textarea class="input subtask-note" placeholder="Notes">${t.note||''}</textarea><div class="subtask-actions"><button class="btn mini reminder-btn" aria-label="Add reminder">\uD83D\uDD14</button><button class="btn mini remove-subtask" aria-label="Remove subtask">\u2715</button></div></li>`).join('');
+        html=arr.map((t,i)=>`<li class="subtask" data-index="${i}"><div class="subtask-head"><span class="index">${i+1}.</span><textarea class="input subtask-title" rows="2">${t.title||''}</textarea></div><input type="date" class="input subtask-due" value="${t.due||''}" /><select class="input subtask-state"><option value="todo"${(t.status||status)==='todo'?' selected':''}>Need to complete</option><option value="progress"${(t.status||status)==='progress'?' selected':''}>In progress</option><option value="done"${(t.status||status)==='done'?' selected':''}>Completed</option></select><textarea class="input subtask-note" placeholder="Notes">${t.note||''}</textarea><div class="subtask-actions"><button class="btn mini reminder-btn" aria-label="Add reminder">\uD83D\uDD14</button><button class="btn mini remove-subtask" aria-label="Remove subtask">\u2715</button></div></li>`).join('');
       }else{
         html='<li class="muted">None</li>';
       }
@@ -2161,15 +2165,27 @@ function getHelpResponse(message) {
 
   return 'You can ask me about tasks, clients, companies, or get a quick wellness tip.';
 }
+function sendHelpMessage(msg){
+  helpAppend('You', msg);
+  const reply = getHelpResponse(msg);
+  helpAppend('Assistant', reply);
+}
 
 helpForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const msg = helpInput.value.trim();
   if (!msg) return;
-  helpAppend('You', msg);
-  const reply = getHelpResponse(msg);
-  helpAppend('Assistant', reply);
+  sendHelpMessage(msg);
   helpInput.value = '';
+});
+
+document.querySelectorAll('.assistant .prompt').forEach(p=>{
+  p.addEventListener('click',()=>{
+    const msg = p.dataset.message || p.textContent.replace(/^“|”$/g,'').trim();
+    helpInput.value = msg;
+    sendHelpMessage(msg);
+    helpInput.value = '';
+  });
 });
 </script>
 
