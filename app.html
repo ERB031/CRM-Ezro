@@ -46,10 +46,11 @@
     .btn{background:var(--purple);color:#fff;border:none;border-radius:10px;padding:10px 14px;cursor:pointer}
     .btn.secondary{background:#fff;color:var(--purple);border:1px solid var(--purple)}
     .btn.link{background:transparent;color:var(--purple);border:none;padding:0}
+    .btn.mini{color:#fff}
     .input, select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
     .table{width:100%;border-collapse:separate;border-spacing:0 8px}
     .table th{color:var(--muted);font-weight:600;text-align:left;padding:6px 8px}
-    .table td{background:#fff;border:1px solid var(--border);padding:10px 8px}
+    .table td{background:#fff;border:1px solid var(--border);padding:10px 8px;word-break:break-word}
     .table td:first-child{border-radius:10px 0 0 10px}
     .table td:last-child{border-radius:0 10px 10px 0}
     .table td[data-stage]{min-width:140px}
@@ -82,6 +83,8 @@
     .checkbox.checked::before{content:'✓'}
     .task.checked .task-title{text-decoration:line-through;color:var(--muted)}
     .notice{background:#f6f3ff;border:1px solid var(--border);padding:10px;border-radius:10px}
+    #projects-card .table th{background:var(--purple);color:#fff}
+    #projects-card .table td{color:#fff;background:var(--purple-600)}
     .add-task-row{display:flex;gap:6px;margin-top:8px}
     .task-col{padding:8px;border-radius:8px;border:1px solid var(--border)}
     .task-col.todo{border-color:var(--warning);background:#f59e0b1a}
@@ -136,6 +139,8 @@
       padding:8px 12px;
       cursor:pointer;
     }
+    #task-modal .card{transition:transform .2s ease;}
+    #task-modal .card.scaled{transform:scale(1.2);}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
@@ -145,6 +150,7 @@
       <div class="brand"><div class="brand-logo" aria-label="Logo">∑</div> EZRO.AI</div>
       <nav id="nav"></nav>
       <input type="search" id="global-search" class="search" placeholder="Search..." aria-label="Global search" />
+      <button id="notif-btn" class="btn link" aria-label="Notifications">🔔</button>
       <button id="help-btn" class="btn link" aria-label="Help">❔</button>
     </div>
   </header>
@@ -312,15 +318,15 @@
         <div class="grid grid-3" id="pipeline">
           <div class="column" data-stage="Lead">
             <h4>Lead</h4>
-            <div class="task" draggable="true">Alex Rivera – Zenith Group<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-alex" data-tab="crm-clients">Profile</a></div></div>
+            <div class="task" draggable="true" data-client-id="crm-alex">Alex Rivera – Zenith Group<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-alex" data-tab="crm-clients">Profile</a></div></div>
           </div>
           <div class="column" data-stage="Proposal">
             <h4>Proposal</h4>
-            <div class="task" draggable="true">Priya Shah – Blue Sky Studio<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-priya" data-tab="crm-clients">Profile</a></div></div>
+            <div class="task" draggable="true" data-client-id="crm-priya">Priya Shah – Blue Sky Studio<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-priya" data-tab="crm-clients">Profile</a></div></div>
           </div>
           <div class="column" data-stage="Won">
             <h4>Won</h4>
-            <div class="task" draggable="true">Jordan Lee – Acme Co.<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-acme" data-tab="crm-clients">Profile</a></div></div>
+            <div class="task" draggable="true" data-client-id="crm-acme">Jordan Lee – Acme Co.<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-acme" data-tab="crm-clients">Profile</a></div></div>
           </div>
         </div>
       </div>
@@ -455,6 +461,7 @@
             <button class="btn" id="daily-add">Add</button>
           </div>
           <button class="btn" id="done-day">Mark Done for the Day</button>
+          <button class="btn secondary" id="micro-break-btn">Need a micro-break?</button>
         </div>
         <div class="card">
           <h3>Mental Health Trend</h3>
@@ -479,6 +486,10 @@
       <div class="card" style="margin-top:16px;text-align:center">
         <button class="btn" id="start-survey">🌱 Employee Wellness Survey</button>
         <p class="mini" style="margin-top:8px"><a href="https://www.youtube.com/watch?v=EBxV9YDEtAk" target="_blank" rel="noopener">Try this office stretch</a></p>
+      </div>
+      <div class="card" style="margin-top:16px;text-align:center">
+        <h3>Weekly Self-Reflection</h3>
+        <button class="btn" id="weekly-reflection">Start Weekly Reflection</button>
       </div>
     </section>
 
@@ -728,6 +739,12 @@
 
     const helpBtn = document.getElementById('help-btn');
     if(helpBtn){ helpBtn.addEventListener('click',()=>alert('Help is coming soon (demo)')); }
+    const notifBtn = document.getElementById('notif-btn');
+    if(notifBtn){ notifBtn.addEventListener('click',()=>alert('No new notifications')); }
+    const microBreakBtn = document.getElementById('micro-break-btn');
+    if(microBreakBtn){ microBreakBtn.addEventListener('click',()=>alert('Take a quick micro-break!')); }
+    const weeklyBtn = document.getElementById('weekly-reflection');
+    if(weeklyBtn){ weeklyBtn.addEventListener('click',()=>alert('Reflection started (demo)')); }
 
     function showPage(hash){
       document.querySelectorAll('.page').forEach(el=>el.classList.add('hidden'));
@@ -771,7 +788,7 @@
     }
 
     const pipelineBoard = document.getElementById('pipeline');
-    function addToPipeline(name, company, stage){
+    function addToPipeline(name, company, stage, id){
       if(!pipelineBoard) return;
       const col=[...pipelineBoard.querySelectorAll('.column')].find(c=>c.dataset.stage===stage);
       if(col){
@@ -779,6 +796,7 @@
         div.className='task';
         div.textContent=`${name} – ${company}`;
         div.draggable=true;
+        if(id) div.dataset.clientId=id;
         div.addEventListener('dragstart',()=> draggedPerson=div);
         col.appendChild(div);
       }
@@ -799,7 +817,7 @@
         tr.id = 'client-'+Date.now();
         tr.innerHTML=`<td contenteditable class="client-name">${name}</td><td contenteditable>${comp}</td><td contenteditable>${email}</td><td contenteditable>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
         clientTable.appendChild(tr);
-        addToPipeline(name, comp, stage);
+        addToPipeline(name, comp, stage, tr.id);
         openClientModal(tr);
         ['new-name','new-company','new-email','new-phone','new-owner'].forEach(id=>document.getElementById(id).value='');
       });
@@ -845,6 +863,17 @@
     const saveCompaniesBtn = document.getElementById('save-companies');
     const companyTable = document.getElementById('company-table').querySelector('tbody');
     const companySearch = document.getElementById('company-search');
+    if(companyTable){
+      companyTable.addEventListener('click',e=>{
+        const row=e.target.closest('tr');
+        if(!row) return;
+        const company=row.children[0].textContent.trim();
+        const clients=[...document.querySelectorAll('#client-table tbody tr')]
+          .filter(r=>r.children[1].textContent.trim()===company)
+          .map(r=>r.querySelector('.client-name').textContent.trim());
+        alert(clients.length?`Clients: ${clients.join(', ')}`:'No clients');
+      });
+    }
     if(addCompanyBtn){
       addCompanyBtn.addEventListener('click',()=>{
         const name=getVal('new-comp-name'); const industry=getVal('new-comp-industry'); const site=getVal('new-comp-website'); const stage=getVal('new-comp-stage'); const owner=getVal('new-comp-owner');
@@ -1106,8 +1135,8 @@
         const assignedId = t.clientId || t.companyId;
         const contactLink = assignedName ? `<a href=\"#page-crm\" class=\"crm-link\" data-target=\"${assignedId}\" data-tab=\"${t.clientId?'crm-clients':'crm-companies'}\">${assignedName}</a>` : '';
         const teamName = teamMembers.find(m=>m.id===t.teamId)?.name || '';
-        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${t.group?`<div class=\\"mini\\">Group: ${t.group}</div>`:''}${t.owner?`<div class=\\"mini\\">Owner: ${t.owner}</div>`:''}${t.priority?`<div class=\\"mini\\">Priority: ${t.priority}</div>`:''}${teamName?`<div class=\\"mini\\">Team: ${teamName}</div>`:''}${contactLink?`<div class=\\"mini\\">${assignedLabel}: ${contactLink}</div>`:''}`;
-        col.appendChild(div);
+        div.innerHTML = `<div style=\"display:flex;align-items:center;gap:6px;\"><div class=\"checkbox ${t.checked?'checked':''}\" data-check></div><div contenteditable class=\"task-title\">${t.title}</div><button class=\"btn mini remove-task\" aria-label=\"Remove task\">\u2715</button></div><div class=\"mini\">Due: <input type=\"date\" class=\"task-due\" value=\"${t.due||''}\" /></div>${t.group?`<div class=\\"mini\\">Group: ${t.group}</div>`:''}${t.owner?`<div class=\\"mini\\">Owner: ${t.owner}</div>`:''}${t.priority?`<div class=\\"mini\\">Priority: ${t.priority}</div>`:''}${teamName?`<div class=\\"mini\\">Team: ${teamName}</div>`:''}${contactLink?`<div class=\\"mini\\">${assignedLabel}: ${contactLink}</div>`:''}`;
+      col.appendChild(div);
       });
       updateInsights();
       renderWorkflow();
@@ -1117,18 +1146,9 @@
       const group = prompt('Group?','')||'';
       const todo = prompt('To-Do?', title)||title;
       if(!due) due = prompt('Due date? (YYYY-MM-DD)','')||'';
-      let statusText = prompt('Status? (Not Started/In Progress/Completed)', status)||status||'Not Started';
-      let boardStatus = 'todo';
-      if(/progress/i.test(statusText)) boardStatus='progress';
-      else if(/done|complete/i.test(statusText)) boardStatus='done';
-      const priority = prompt('Priority?','')||'';
-      const owner = prompt('Owner?','')||'';
-      const notes = prompt('Notes?','')||'';
-      const budget = prompt('Budget?','')||'';
-      const files = prompt('Files?','')||'';
-      const timeline = prompt('Timeline?','')||'';
+      const boardStatus = status || 'todo';
       const updated = new Date().toISOString().split('T')[0];
-      tasks.push({id,group,title:todo,due,status:boardStatus,priority,owner,notes,budget,files,timeline,updated,checked:boardStatus==='done',clientId:'',companyId:'',teamId:''});
+      tasks.push({id,group,title:todo,due,status:boardStatus,priority:'',owner:'',notes:'',budget:'',files:'',timeline:'',updated,checked:boardStatus==='done',clientId:'',companyId:'',teamId:''});
       saveTasks();
       renderTasks();
     }
@@ -1215,7 +1235,7 @@
           div.className='task'+(t.checked?' checked':'');
           div.dataset.id=t.id;
           const linkHTML = t.link ? `<div class="mini"><a href="${t.link}" target="_blank">Learn more</a></div>` : '';
-          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div contenteditable class="task-title">${t.title}</div></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${linkHTML}`;
+          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div contenteditable class="task-title">${t.title}</div><button class="btn mini move-up" aria-label="Move up">↑</button><button class="btn mini move-down" aria-label="Move down">↓</button><button class="btn mini remove-task" aria-label="Remove task">✕</button></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${linkHTML}`;
           dailyList.appendChild(div);
         });
         updateDashboardTasks();
@@ -1236,6 +1256,38 @@
       }
       loadDaily();
       renderDaily();
+      document.addEventListener('click',e=>{
+        if(e.target.classList.contains('move-up')||e.target.classList.contains('move-down')){
+          const taskEl=e.target.closest('.task');
+          const id=Number(taskEl.dataset.id);
+          const idx=dailyTasks.findIndex(t=>t.id===id);
+          if(e.target.classList.contains('move-up') && idx>0){
+            [dailyTasks[idx-1],dailyTasks[idx]]=[dailyTasks[idx],dailyTasks[idx-1]];
+          }else if(e.target.classList.contains('move-down') && idx<dailyTasks.length-1){
+            [dailyTasks[idx+1],dailyTasks[idx]]=[dailyTasks[idx],dailyTasks[idx+1]];
+          }
+          saveDaily();
+          renderDaily();
+        } else if(e.target.classList.contains('remove-task')){
+          const taskEl=e.target.closest('.task');
+          const id=Number(taskEl.dataset.id);
+          let idx=dailyTasks.findIndex(t=>t.id===id);
+          if(idx>-1){
+            dailyTasks.splice(idx,1);
+            saveDaily();
+            renderDaily();
+          } else {
+            idx=tasks.findIndex(t=>t.id===id);
+            if(idx>-1){
+              tasks.splice(idx,1);
+              saveTasks();
+              renderTasks();
+              updateInsights();
+              renderWorkflow();
+            }
+          }
+        }
+      });
 
       // Task notes storage
       let taskNotes = {};
@@ -1458,7 +1510,16 @@
     document.querySelectorAll('#pipeline .column').forEach(col=>{
       col.addEventListener('dragover', e=>e.preventDefault());
       col.addEventListener('drop', ()=>{
-        if(draggedPerson){ col.appendChild(draggedPerson); draggedPerson=null; }
+        if(draggedPerson){
+          col.appendChild(draggedPerson);
+          const cid = draggedPerson.dataset.clientId;
+          if(cid){
+            const row=document.getElementById(cid);
+            const select=row?.querySelector('[data-stage] select');
+            if(select){ select.value = col.dataset.stage; }
+          }
+          draggedPerson=null;
+        }
       });
     });
 
@@ -1729,6 +1790,8 @@
           if(upcoming[idx]){ upcoming[idx].time = dueVal; saveUpcoming(); renderUpcoming(); }
         }
         taskModal.classList.add('hidden');
+        const card = taskModal.querySelector('.card');
+        if(card) card.classList.remove('scaled');
       }
       if(taskModal){
         taskModal.addEventListener('click', e=>{ if(e.target===taskModal.firstElementChild){ saveTaskModal(); } });
@@ -1807,19 +1870,21 @@
         taskModal.dataset.source = source;
         taskModal.dataset.id = id;
         taskModal.classList.remove('hidden');
+        const card = taskModal.querySelector('.card');
+        if(card) card.classList.add('scaled');
       }
     }
 
     const dailyListEl = document.getElementById('daily-list');
     if(dailyListEl){
-      dailyListEl.addEventListener('click',e=>{
+      dailyListEl.addEventListener('dblclick',e=>{
         if(e.target.closest('.checkbox')||e.target.tagName==='A') return;
         const taskEl = e.target.closest('.task');
         if(taskEl) openTaskDetails(taskEl);
       });
     }
 
-    document.addEventListener('click', e=>{
+    document.addEventListener('dblclick', e=>{
       if(e.target.closest('#daily-list')||e.target.closest('.checkbox')||e.target.closest('.remove-upcoming')||e.target.classList.contains('up-time')||e.target.classList.contains('task-due')||e.target.hasAttribute('contenteditable')||e.target.closest('[contenteditable]')||e.target.tagName==='A') return;
       const taskEl = e.target.closest('.task');
       if(!taskEl || taskEl.closest('#task-modal')) return;
