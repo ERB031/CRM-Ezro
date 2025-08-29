@@ -53,12 +53,16 @@
     .table td:first-child{border-radius:10px 0 0 10px}
     .table td:last-child{border-radius:0 10px 10px 0}
     .table td[data-stage]{min-width:140px}
+    #project-table td{white-space:normal;word-break:break-word}
+    #project-table th{color:#fff;background:var(--purple)}
     .stage-select{min-width:140px}
     .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid var(--border);background:var(--purple-100);color:var(--purple-600)}
     .kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;overflow-x:auto}
     .column{background:var(--bg-alt);border:1px dashed var(--border);border-radius:12px;padding:10px;min-width:300px}
     .column h4{margin:0 0 8px 0}
-    .task{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px}
+    .task{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px;cursor:grab}
+    .task.dragging{opacity:.5}
+    #daily-list .task-title{user-select:none}
     .subtask{display:flex;flex-direction:column;gap:6px;margin:8px 0;padding:8px;border:1px solid var(--border);border-radius:8px;background:#fff}
     .subtask-head{display:flex;align-items:center;gap:6px}
     .subtask-actions{display:flex;gap:6px}
@@ -70,6 +74,7 @@
     #project-table tbody tr{cursor:pointer}
     .kpi{display:flex;align-items:center;justify-content:space-between}
     .mini{font-size:12px;color:var(--muted)}
+    .btn.mini{color:#fff}
     .cta-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
     .cta{background:linear-gradient(180deg,#fff,#efe8ff);border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px}
     .cta:hover{box-shadow:0 10px 28px rgba(107,70,193,.18)}
@@ -200,14 +205,15 @@
 
     <!-- CRM SNAPSHOT -->
     <section id="page-crm" class="page hidden">
-      <div class="linkrow" id="crm-tabs" style="margin-bottom:12px">
-        <button class="btn crm-tab active" data-target="crm-clients">Clients</button>
-        <button class="btn crm-tab" data-target="crm-companies">Companies</button>
-      </div>
-      <div id="crm-clients">
-        <div class="grid grid-2 crm-grid">
+      <div class="card" id="crm-box">
+        <div class="linkrow" id="crm-tabs" style="margin-bottom:12px">
+          <button class="btn crm-tab active" data-target="crm-clients">Clients</button>
+          <button class="btn crm-tab" data-target="crm-companies">Companies</button>
+        </div>
+        <div id="crm-clients">
+          <div class="grid grid-2 crm-grid">
           <div class="card">
-            <h3>Clients <span class="pill">Editable</span></h3>
+            <h3>Clients</h3>
             <input class="input" id="client-search" placeholder="Search clients" style="margin-bottom:8px" />
             <table class="table" id="client-table">
               <thead>
@@ -215,28 +221,28 @@
               </thead>
               <tbody>
                 <tr id="crm-alex" data-address="123 Peachtree Rd, Atlanta, GA" data-notes="">
-                  <td contenteditable class="client-name">Alex Rivera</td>
-                  <td contenteditable>Zenith Group</td>
-                  <td contenteditable>alex@zenithgrp.com</td>
-                  <td contenteditable>(404) 555‑0101</td>
+                  <td class="client-name">Alex Rivera</td>
+                  <td>Zenith Group</td>
+                  <td>alex@zenithgrp.com</td>
+                  <td>(404) 555‑0101</td>
                   <td data-stage><select class="input stage-select"><option selected>Lead</option><option>Discovery</option><option>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
-                  <td contenteditable>Nate</td>
+                  <td>Nate</td>
                 </tr>
                 <tr id="crm-priya" data-address="500 Midtown Ave, Atlanta, GA" data-notes="">
-                  <td contenteditable class="client-name">Priya Shah</td>
-                  <td contenteditable>Blue Sky Studio</td>
-                  <td contenteditable>priya@blueskystudio.io</td>
-                  <td contenteditable>(470) 555‑0199</td>
+                  <td class="client-name">Priya Shah</td>
+                  <td>Blue Sky Studio</td>
+                  <td>priya@blueskystudio.io</td>
+                  <td>(470) 555‑0199</td>
                   <td data-stage><select class="input stage-select"><option>Lead</option><option>Discovery</option><option selected>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
-                  <td contenteditable>Nate</td>
+                  <td>Nate</td>
                 </tr>
                 <tr id="crm-acme" data-address="42 Industrial Way, Atlanta, GA" data-notes="">
-                  <td contenteditable class="client-name">Jordan Lee</td>
-                  <td contenteditable>Acme Co.</td>
-                  <td contenteditable>jordan@acmeco.com</td>
-                  <td contenteditable>(678) 555‑0147</td>
+                  <td class="client-name">Jordan Lee</td>
+                  <td>Acme Co.</td>
+                  <td>jordan@acmeco.com</td>
+                  <td>(678) 555‑0147</td>
                   <td data-stage><select class="input stage-select"><option>Lead</option><option>Discovery</option><option>Proposal</option><option>Negotiation</option><option selected>Won</option></select></td>
-                  <td contenteditable>Nate</td>
+                  <td>Nate</td>
                 </tr>
               </tbody>
             </table>
@@ -258,14 +264,14 @@
                 <button class="btn link" data-nav="#page-cover">Back to Cover</button>
               </div>
             </div>
-            <p class="mini muted" style="margin-top:8px">Edits are inline. “Save Changes” stores a local copy in your browser for demo purposes.</p>
+            <p class="mini muted" style="margin-top:8px">“Save Changes” stores a local copy in your browser for demo purposes.</p>
           </div>
         </div>
-      </div>
-      <div id="crm-companies" class="hidden">
-        <div class="grid grid-2 crm-grid">
+        </div>
+        <div id="crm-companies" class="hidden">
+          <div class="grid grid-2 crm-grid">
           <div class="card">
-            <h3>Companies <span class="pill">Editable</span></h3>
+            <h3>Companies</h3>
             <input class="input" id="company-search" placeholder="Search companies" style="margin-bottom:8px" />
             <table class="table" id="company-table">
               <thead>
@@ -273,18 +279,18 @@
               </thead>
               <tbody>
                   <tr id="company-zenith">
-                    <td contenteditable>Zenith Group</td>
-                  <td contenteditable>Finance</td>
-                  <td contenteditable>zenithgrp.com</td>
+                    <td>Zenith Group</td>
+                  <td>Finance</td>
+                  <td>zenithgrp.com</td>
                   <td data-stage><select class="input stage-select"><option>Lead</option><option>Discovery</option><option selected>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
-                  <td contenteditable>Nate</td>
+                  <td>Nate</td>
                 </tr>
                   <tr id="company-blue">
-                    <td contenteditable>Blue Sky Studio</td>
-                  <td contenteditable>Design</td>
-                  <td contenteditable>blueskystudio.io</td>
+                    <td>Blue Sky Studio</td>
+                  <td>Design</td>
+                  <td>blueskystudio.io</td>
                   <td data-stage><select class="input stage-select"><option selected>Lead</option><option>Discovery</option><option>Proposal</option><option>Negotiation</option><option>Won</option></select></td>
-                  <td contenteditable>Nate</td>
+                  <td>Nate</td>
                 </tr>
               </tbody>
             </table>
@@ -312,15 +318,15 @@
         <div class="grid grid-3" id="pipeline">
           <div class="column" data-stage="Lead">
             <h4>Lead</h4>
-            <div class="task" draggable="true">Alex Rivera – Zenith Group<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-alex" data-tab="crm-clients">Profile</a></div></div>
+            <div class="task" draggable="true" data-client="crm-alex">Alex Rivera – Zenith Group<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-alex" data-tab="crm-clients">Profile</a></div></div>
           </div>
           <div class="column" data-stage="Proposal">
             <h4>Proposal</h4>
-            <div class="task" draggable="true">Priya Shah – Blue Sky Studio<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-priya" data-tab="crm-clients">Profile</a></div></div>
+            <div class="task" draggable="true" data-client="crm-priya">Priya Shah – Blue Sky Studio<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-priya" data-tab="crm-clients">Profile</a></div></div>
           </div>
           <div class="column" data-stage="Won">
             <h4>Won</h4>
-            <div class="task" draggable="true">Jordan Lee – Acme Co.<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-acme" data-tab="crm-clients">Profile</a></div></div>
+            <div class="task" draggable="true" data-client="crm-acme">Jordan Lee – Acme Co.<div class="mini"><a href="#page-crm" class="crm-link" data-target="crm-acme" data-tab="crm-clients">Profile</a></div></div>
           </div>
         </div>
       </div>
@@ -403,30 +409,30 @@
           </thead>
           <tbody>
             <tr data-key="onboard" tabindex="0">
-              <td contenteditable>Launch Onboarding Flow</td>
+              <td>Launch Onboarding Flow</td>
               <td><select class="input project-client"></select></td>
               <td><select class="input project-company"></select></td>
-              <td contenteditable>Nate</td>
-              <td contenteditable>In Progress</td>
-              <td contenteditable>2024-06-15</td>
+              <td>Nate</td>
+              <td>In Progress</td>
+              <td>2024-06-15</td>
               <td><button class="btn link remove-project">Remove</button></td>
             </tr>
             <tr data-key="blue" tabindex="0">
-              <td contenteditable>Proposal for Blue Sky</td>
+              <td>Proposal for Blue Sky</td>
               <td><select class="input project-client"></select></td>
               <td><select class="input project-company"></select></td>
-              <td contenteditable>Priya</td>
-              <td contenteditable>Proposal Sent</td>
-              <td contenteditable>2024-06-20</td>
+              <td>Priya</td>
+              <td>Proposal Sent</td>
+              <td>2024-06-20</td>
               <td><button class="btn link remove-project">Remove</button></td>
             </tr>
             <tr data-key="acme" tabindex="0">
-              <td contenteditable>Kickoff – Acme Co.</td>
+              <td>Kickoff – Acme Co.</td>
               <td><select class="input project-client"></select></td>
               <td><select class="input project-company"></select></td>
-              <td contenteditable>Jordan</td>
-              <td contenteditable>Planning</td>
-              <td contenteditable>2024-06-30</td>
+              <td>Jordan</td>
+              <td>Planning</td>
+              <td>2024-06-30</td>
               <td><button class="btn link remove-project">Remove</button></td>
             </tr>
           </tbody>
@@ -457,24 +463,26 @@
           <button class="btn" id="done-day">Mark Done for the Day</button>
         </div>
         <div class="card">
-          <h3>Mental Health Trend</h3>
-          <div class="mini muted">Self‑reported 1–5 scale • Past 7 days</div>
-            <svg viewBox="0 0 320 180" class="chart" id="mood-chart" aria-label="Mental health chart">
-              <polyline id="mood-line" fill="none" stroke="#6b46c1" stroke-width="3"></polyline>
-              <g id="mood-dots" fill="#6b46c1"></g>
-            </svg>
+          <h3>Workload Check-In</h3>
+          <div class="mini muted">How heavy does your workload feel today?</div>
           <div class="grid" style="margin-top:10px">
-            <select id="mood-today" class="input">
-              <option value="5">Today’s mood: 5 (Great)</option>
-              <option value="4">4</option>
-              <option value="3">3</option>
-              <option value="2">2</option>
-              <option value="1">1</option>
+            <select id="workload-today" class="input">
+              <option value="light">Light</option>
+              <option value="balanced" selected>Balanced</option>
+              <option value="overwhelming">Overwhelming</option>
             </select>
-            <button class="btn secondary" id="log-mood">Log Mood (Demo)</button>
+            <button class="btn secondary" id="log-workload">Log Check-In</button>
           </div>
-          <p class="mini muted">This is a visual demo; logging won’t persist beyond this session.</p>
+          <p class="mini muted">Balanced streak: <span id="balanced-streak">0</span> days</p>
+          <canvas id="workload-graph" width="320" height="120" class="chart" style="margin-top:10px"></canvas>
+          <button class="btn link" id="break-btn" style="margin-top:10px">Need a micro-break?</button>
+          <p class="mini" id="break-output"></p>
         </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Weekly Self-Reflection</h3>
+        <button class="btn" id="weekly-checkin">Start Weekly Reflection</button>
+        <p class="mini" id="reflection-last" style="margin-top:8px"></p>
       </div>
       <div class="card" style="margin-top:16px;text-align:center">
         <button class="btn" id="start-survey">🌱 Employee Wellness Survey</button>
@@ -661,7 +669,7 @@
     <!-- PROJECT DETAIL MODAL -->
     <section id="project-modal" class="hidden" aria-hidden="true">
       <div style="position:fixed;inset:0;background:rgba(31,26,51,.66);display:grid;place-items:center;z-index:1000">
-        <div class="card" style="max-width:600px;width:90%">
+        <div class="card" style="width:90%;max-width:90vw;max-height:90vh;overflow:auto;resize:both">
           <h3 id="project-title"></h3>
           <p class="mini">Owner: <span id="project-owner"></span> • Status: <span id="project-status"></span></p>
           <p class="mini">Due: <span id="project-due"></span></p>
@@ -755,6 +763,9 @@
     // On load
     showPage(location.hash || '#page-cover');
 
+    const workloadGraphCtx = document.getElementById('workload-graph')?.getContext('2d');
+    const workloadCtx = document.getElementById('workload-chart')?.getContext('2d');
+
     // CRM tabs
     document.querySelectorAll('.crm-tab').forEach(btn=>{
       btn.addEventListener('click',()=>{
@@ -771,14 +782,15 @@
     }
 
     const pipelineBoard = document.getElementById('pipeline');
-    function addToPipeline(name, company, stage){
+    function addToPipeline(name, company, stage, id){
       if(!pipelineBoard) return;
       const col=[...pipelineBoard.querySelectorAll('.column')].find(c=>c.dataset.stage===stage);
       if(col){
         const div=document.createElement('div');
         div.className='task';
-        div.textContent=`${name} – ${company}`;
+        if(id) div.dataset.client = id;
         div.draggable=true;
+        div.innerHTML = `${name} – ${company}<div class="mini"><a href="#page-crm" class="crm-link" data-target="${id}" data-tab="crm-clients">Profile</a></div>`;
         div.addEventListener('dragstart',()=> draggedPerson=div);
         col.appendChild(div);
       }
@@ -797,9 +809,9 @@
         if(!name||!comp){ alert('Name and Company are required.'); return; }
         const tr=document.createElement('tr');
         tr.id = 'client-'+Date.now();
-        tr.innerHTML=`<td contenteditable class="client-name">${name}</td><td contenteditable>${comp}</td><td contenteditable>${email}</td><td contenteditable>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
+        tr.innerHTML=`<td class="client-name">${name}</td><td>${comp}</td><td>${email}</td><td>${phone}</td><td data-stage>${stageDropdown(stage)}</td><td>${owner}</td>`;
         clientTable.appendChild(tr);
-        addToPipeline(name, comp, stage);
+        addToPipeline(name, comp, stage, tr.id);
         openClientModal(tr);
         ['new-name','new-company','new-email','new-phone','new-owner'].forEach(id=>document.getElementById(id).value='');
       });
@@ -833,7 +845,7 @@
           rows.forEach(cols=>{
             const tr=document.createElement('tr');
             tr.id = 'client-'+Math.random().toString(36).slice(2,9);
-            tr.innerHTML = cols.map((v,i)=> i===4? `<td data-stage>${stageDropdown(v)}</td>` : `<td contenteditable>${v}</td>`).join('');
+            tr.innerHTML = cols.map((v,i)=> i===4? `<td data-stage>${stageDropdown(v)}</td>` : `<td>${v}</td>`).join('');
             clientTable.appendChild(tr);
           });
         }catch(err){ console.warn('Failed to parse saved CRM data', err); }
@@ -851,8 +863,9 @@
         if(!name){ alert('Company name required'); return; }
         const tr=document.createElement('tr');
         tr.id = 'company-'+Date.now();
-        tr.innerHTML=`<td contenteditable>${name}</td><td contenteditable>${industry}</td><td contenteditable>${site}</td><td data-stage>${stageDropdown(stage)}</td><td contenteditable>${owner}</td>`;
+        tr.innerHTML=`<td>${name}</td><td>${industry}</td><td>${site}</td><td data-stage>${stageDropdown(stage)}</td><td>${owner}</td>`;
         companyTable.appendChild(tr);
+        openClientModal(tr, true);
         ['new-comp-name','new-comp-industry','new-comp-website','new-comp-owner'].forEach(id=>document.getElementById(id).value='');
       });
     }
@@ -871,6 +884,17 @@
         });
       });
     }
+    if(companyTable && clientSearch){
+      companyTable.addEventListener('click',e=>{
+        const row = e.target.closest('tr');
+        if(!row) return;
+        const name = row.children[0].textContent.trim();
+        clientSearch.value = name;
+        clientSearch.dispatchEvent(new Event('input'));
+        const btn = document.querySelector('.crm-tab[data-target="crm-clients"]');
+        if(btn) btn.click();
+      });
+    }
     if(saveCompaniesBtn){
       saveCompaniesBtn.addEventListener('click',()=>{
         localStorage.setItem('companies-demo', JSON.stringify(serializeCompanies()));
@@ -884,7 +908,7 @@
           rows.forEach(cols=>{
             const tr=document.createElement('tr');
             tr.id = 'company-'+Math.random().toString(36).slice(2,9);
-            tr.innerHTML = cols.map((v,i)=> i===3? `<td data-stage>${stageDropdown(v)}</td>` : `<td contenteditable>${v}</td>`).join('');
+            tr.innerHTML = cols.map((v,i)=> i===3? `<td data-stage>${stageDropdown(v)}</td>` : `<td>${v}</td>`).join('');
             companyTable.appendChild(tr);
           });
         }catch(err){ console.warn('Failed to parse saved companies data', err); }
@@ -1110,25 +1134,14 @@
         col.appendChild(div);
       });
       updateInsights();
-      renderWorkflow();
     }
     function addTask(status,title,due){
       const id = Date.now();
       const group = prompt('Group?','')||'';
-      const todo = prompt('To-Do?', title)||title;
       if(!due) due = prompt('Due date? (YYYY-MM-DD)','')||'';
-      let statusText = prompt('Status? (Not Started/In Progress/Completed)', status)||status||'Not Started';
-      let boardStatus = 'todo';
-      if(/progress/i.test(statusText)) boardStatus='progress';
-      else if(/done|complete/i.test(statusText)) boardStatus='done';
       const priority = prompt('Priority?','')||'';
-      const owner = prompt('Owner?','')||'';
-      const notes = prompt('Notes?','')||'';
-      const budget = prompt('Budget?','')||'';
-      const files = prompt('Files?','')||'';
-      const timeline = prompt('Timeline?','')||'';
-      const updated = new Date().toISOString().split('T')[0];
-      tasks.push({id,group,title:todo,due,status:boardStatus,priority,owner,notes,budget,files,timeline,updated,checked:boardStatus==='done',clientId:'',companyId:'',teamId:''});
+      const boardStatus = status || 'todo';
+      tasks.push({id,group,title,due,status:boardStatus,priority,checked:boardStatus==='done',clientId:'',companyId:'',teamId:''});
       saveTasks();
       renderTasks();
     }
@@ -1214,8 +1227,19 @@
           const div=document.createElement('div');
           div.className='task'+(t.checked?' checked':'');
           div.dataset.id=t.id;
+          div.draggable=true;
           const linkHTML = t.link ? `<div class="mini"><a href="${t.link}" target="_blank">Learn more</a></div>` : '';
-          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div contenteditable class="task-title">${t.title}</div></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${linkHTML}`;
+          let contactHTML='';
+          if(t.clientId){
+            const row=clientTable.querySelector(`#${t.clientId}`);
+            const name=row?row.querySelector('.client-name').textContent.trim():'';
+            contactHTML=name?`<div class="mini"><a href="#page-crm" class="crm-link" data-target="${t.clientId}" data-tab="crm-clients">Client: ${name}</a></div>`:'';
+          }else if(t.companyId){
+            const row=companyTable.querySelector(`#${t.companyId}`);
+            const name=row?row.children[0].textContent.trim():'';
+            contactHTML=name?`<div class="mini"><a href="#page-crm" class="crm-link" data-target="${t.companyId}" data-tab="crm-companies">Company: ${name}</a></div>`:'';
+          }
+          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div class="task-title">${t.title}</div></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${contactHTML}${linkHTML}`;
           dailyList.appendChild(div);
         });
         updateDashboardTasks();
@@ -1228,7 +1252,19 @@
           const title=document.getElementById('daily-new-title').value.trim();
           const due=dailyDueInput.value||todayStr;
           if(!title) return;
-          dailyTasks.push({id:Date.now(),title,due,checked:false});
+          const tasksToday = dailyTasks.filter(t=>t.due===todayStr).length;
+          let finalDue = due;
+          if(tasksToday>=5){
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate()+1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            if(confirm("This is probably too much for today. Schedule it for tomorrow instead?")){
+              finalDue = tomorrowStr;
+            } else {
+              return;
+            }
+          }
+          dailyTasks.push({id:Date.now(),title,due:finalDue,checked:false});
           saveDaily(); renderDaily();
           document.getElementById('daily-new-title').value='';
           dailyDueInput.value=todayStr;
@@ -1237,31 +1273,70 @@
       loadDaily();
       renderDaily();
 
+      // Workload check-in & micro-breaks
+      const workloadSelect = document.getElementById('workload-today');
+      const logWorkload = document.getElementById('log-workload');
+      const balancedStreak = document.getElementById('balanced-streak');
+      function getWorkloadLog(){
+        const saved = localStorage.getItem('workload-log');
+        return saved ? JSON.parse(saved) : {};
+      }
+      function saveWorkloadLog(log){ localStorage.setItem('workload-log', JSON.stringify(log)); }
+      function calcBalancedStreak(log){
+        let streak = 0; const d=new Date();
+        while(true){
+          const key=d.toISOString().split('T')[0];
+          if(log[key]==='balanced'){ streak++; d.setDate(d.getDate()-1); }
+          else break;
+        }
+        return streak;
+      }
+      if(logWorkload){
+        logWorkload.addEventListener('click',()=>{
+          const log=getWorkloadLog();
+          log[todayStr] = workloadSelect.value;
+          saveWorkloadLog(log);
+          balancedStreak.textContent = calcBalancedStreak(log);
+          updateWorkloadCharts();
+        });
+        balancedStreak.textContent = calcBalancedStreak(getWorkloadLog());
+        updateWorkloadCharts();
+      }
+      const breakBtn = document.getElementById('break-btn');
+      const breakOutput = document.getElementById('break-output');
+      const breakPrompts = ['Stretch for 1 minute','Drink water','Walk for 2 minutes'];
+      if(breakBtn){ breakBtn.addEventListener('click',()=>{ breakOutput.textContent = breakPrompts[Math.floor(Math.random()*breakPrompts.length)]; }); }
+
+      // Weekly self-reflection
+      const weeklyBtn = document.getElementById('weekly-checkin');
+      const reflectionLast = document.getElementById('reflection-last');
+      if(weeklyBtn){
+        weeklyBtn.addEventListener('click',()=>{
+          window.open('https://penzu.com/', '_blank');
+          const balanced = prompt('Did you feel balanced this week?');
+          const drained = prompt('What drained you most?');
+          if(balanced!==null && drained!==null){
+            const entry={date:todayStr,balanced,drained};
+            localStorage.setItem('weekly-reflection',JSON.stringify(entry));
+            reflectionLast.textContent=`Last: ${entry.date} – ${balanced}; Drain: ${drained}`;
+          }
+        });
+        const saved=localStorage.getItem('weekly-reflection');
+        if(saved){ try{ const entry=JSON.parse(saved); reflectionLast.textContent=`Last: ${entry.date} – ${entry.balanced}; Drain: ${entry.drained}`; }catch{} }
+      }
+
       // Task notes storage
       let taskNotes = {};
       const savedNotes = localStorage.getItem('task-notes');
       if(savedNotes){ try{ taskNotes = JSON.parse(savedNotes); }catch{ taskNotes = {}; } }
       document.addEventListener('blur', (e)=>{
+        if(!e.target.classList.contains('task-title')) return;
         const taskEl = e.target.closest('.task');
         if(!taskEl) return;
         const id = Number(taskEl.dataset.id);
         const task = tasks.find(t=>t.id===id);
-        if(task){
-          task.title = taskEl.querySelector('.task-title').textContent.trim();
-          saveTasks();
-          updateInsights();
-          renderWorkflow();
-        }else{
-            const d = dailyTasks.find(t=>t.id===id);
-            if(d){
-              d.title = taskEl.querySelector('.task-title').textContent.trim();
-              const dueInput = taskEl.querySelector('.task-due');
-              d.due = dueInput ? dueInput.value : todayStr;
-              saveDaily();
-            }
-        }
+        if(task){ task.title = e.target.textContent.trim(); saveTasks(); updateInsights(); }
       }, true);
-
       document.addEventListener('change', (e)=>{
         const taskEl = e.target.closest('.task');
         if(!taskEl) return;
@@ -1272,7 +1347,6 @@
             task.due = e.target.value;
             saveTasks();
             updateInsights();
-            renderWorkflow();
           }else{
             const d = dailyTasks.find(t=>t.id===id);
             if(d){ d.due = e.target.value; saveDaily(); }
@@ -1323,6 +1397,7 @@
           completedList.innerHTML = completed.length ? completed.map(t=>`<li>${t.title}</li>`).join('') : '<li>None</li>';
         }
         renderCharts();
+        updateWorkloadCharts();
       }
 
       const barData = {};
@@ -1335,17 +1410,32 @@
       function renderCharts(){
         const overdueCtx = document.getElementById('overdue-chart')?.getContext('2d');
         const completedCtx = document.getElementById('completed-chart')?.getContext('2d');
+        const workflowCtx = document.getElementById('workflow-chart')?.getContext('2d');
         const personalCtx = document.getElementById('personal-mood-chart')?.getContext('2d');
         const teamCtx = document.getElementById('team-mood-chart')?.getContext('2d');
-        const workloadCtx = document.getElementById('workload-chart')?.getContext('2d');
         const revenueCtx = document.getElementById('revenue-chart')?.getContext('2d');
         const timeCtx = document.getElementById('time-chart')?.getContext('2d');
-        const labels = ['Sep 1','Sep 2','Sep 3','Sep 4','Sep 5'];
         const moodLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
         const dayLabels = ['Mon','Tue','Wed','Thu','Fri'];
-        if(overdueCtx){ drawBars(overdueCtx, [3,5,2,4,6], '#ef4444', labels); }
-        if(completedCtx){ drawBars(completedCtx, [1,3,5,4,7], '#16a34a', labels); }
-        if(workloadCtx){ drawBars(workloadCtx, [6,7,5,8,6], '#4f46e5', labels); }
+        const today = new Date().toISOString().split('T')[0];
+        const overdue = tasks.filter(t=>!t.checked && t.due && t.due<today);
+        const completed = tasks.filter(t=>t.checked);
+        if(overdueCtx){
+          const counts={}; overdue.forEach(t=>{counts[t.due]=(counts[t.due]||0)+1;});
+          const labels=Object.keys(counts); const data=labels.map(l=>counts[l]);
+          drawBars(overdueCtx, data, '#ef4444', labels);
+        }
+        if(completedCtx){
+          const counts={}; completed.forEach(t=>{const d=t.due||'No date';counts[d]=(counts[d]||0)+1;});
+          const labels=Object.keys(counts); const data=labels.map(l=>counts[l]);
+          drawBars(completedCtx, data, '#16a34a', labels);
+        }
+        if(workflowCtx){
+          const statuses=['todo','progress','done'];
+          const labels=['To Do','In Progress','Done'];
+          const data=statuses.map(s=>tasks.filter(t=>t.status===s).length);
+          drawBars(workflowCtx, data, '#6366f1', labels);
+        }
         if(personalCtx){ drawBars(personalCtx, moodData, '#6b46c1', moodLabels.slice(-moodData.length)); }
         if(teamCtx){ drawBars(teamCtx, [3,4,2,5,4,3,4], '#8b5cf6', moodLabels); }
         if(revenueCtx){ drawBars(revenueCtx, [200,350,150,400,500], '#4f46e5', dayLabels); }
@@ -1421,13 +1511,16 @@
         }
       }
 
-      function renderWorkflow(){
-        const ctx = document.getElementById('workflow-chart')?.getContext('2d');
-        if(!ctx) return;
-        const labels = ['Research','Design','Development','Testing','Launch'];
-        const data = [1,2,3,4,5];
-        drawBars(ctx, data, '#6366f1', labels);
+      function updateWorkloadCharts(){
+        const log=getWorkloadLog();
+        const entries=Object.entries(log).sort((a,b)=>a[0].localeCompare(b[0])).slice(-7);
+        const labels=entries.map(e=>e[0].slice(5));
+        const map={light:1,balanced:2,overwhelming:3};
+        const data=entries.map(e=>map[e[1]]||0);
+        if(workloadGraphCtx){ drawBars(workloadGraphCtx,data,'#4f46e5',labels); }
+        if(workloadCtx){ drawBars(workloadCtx,data,'#4f46e5',labels); }
       }
+
     loadTasks();
     renderTasks();
 
@@ -1458,7 +1551,15 @@
     document.querySelectorAll('#pipeline .column').forEach(col=>{
       col.addEventListener('dragover', e=>e.preventDefault());
       col.addEventListener('drop', ()=>{
-        if(draggedPerson){ col.appendChild(draggedPerson); draggedPerson=null; }
+        if(draggedPerson){
+          col.appendChild(draggedPerson);
+          const clientId = draggedPerson.dataset.client;
+          if(clientId){
+            const sel = document.querySelector(`#${clientId} [data-stage] select`);
+            if(sel) sel.value = col.dataset.stage;
+          }
+          draggedPerson=null;
+        }
       });
     });
 
@@ -1472,7 +1573,8 @@
         upcoming = [
           {title:'Client Call – Acme Co.', time:'2024-09-02T10:00'},
           {title:'Proposal Review – Blue Sky', time:'2024-09-03T14:00'},
-          {title:'Onboarding Session', time:'2024-09-05T09:00'}
+          {title:'Onboarding Session', time:'2024-09-05T09:00'},
+          {title:'Strategy Session – Zenith Group', time:'2024-09-07T11:00'}
         ];
       }
     }
@@ -1490,6 +1592,7 @@
     }
     const addUpcoming=document.getElementById('add-upcoming');
     const upcomingDateInput=document.getElementById('upcoming-date');
+    const upcomingTitleInput=document.getElementById('upcoming-title');
     if(upcomingDateInput){ upcomingDateInput.value=new Date().toISOString().slice(0,16); }
     if(addUpcoming){
       addUpcoming.addEventListener('click',()=>{
@@ -1501,6 +1604,11 @@
         document.getElementById('upcoming-title').value='';
         upcomingDateInput.value=new Date().toISOString().slice(0,16);
       });
+      if(upcomingTitleInput){
+        upcomingTitleInput.addEventListener('keydown',e=>{
+          if(e.key==='Enter') addUpcoming.click();
+        });
+      }
     }
     if(upcomingList){
       upcomingList.addEventListener('click',e=>{
@@ -1723,7 +1831,15 @@
           }
         }else if(source==='daily'){
           const d = dailyTasks.find(x=>x.id===Number(id));
-          if(d){ d.due = dueVal?dueVal.split('T')[0]:''; saveDaily(); renderDaily(); }
+          if(d){
+            d.title = modalTitle.value.trim();
+            d.due = dueVal?dueVal.split('T')[0]:'';
+            d.clientId=''; d.companyId='';
+            const val = modalClient.value;
+            if(val.startsWith('client:')) d.clientId = val.split(':')[1];
+            else if(val.startsWith('company:')) d.companyId = val.split(':')[1];
+            saveDaily(); renderDaily();
+          }
         }else if(source==='upcoming'){
           const idx = Number(id);
           if(upcoming[idx]){ upcoming[idx].time = dueVal; saveUpcoming(); renderUpcoming(); }
@@ -1780,20 +1896,29 @@
         modalDue.value = due ? (due.includes('T')?due:due+'T00:00') : '';
         modalNote.value = taskNotes[key] || '';
         let html='';
-        if(source==='kanban'){
+        if(source==='kanban' || source==='daily'){
           modalTitle.disabled = false;
-          const teamOpts = teamMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
-          modalTeam.innerHTML = `<option value="">Unassigned</option>${teamOpts}`;
-          modalTeam.value = t ? t.teamId : '';
-          modalTeamLabel.style.display = modalTeam.style.display = '';
           const clientOpts = [...clientTable.querySelectorAll('tr')]
             .map(r=>`<option value="client:${r.id}">${r.querySelector('.client-name').textContent.trim()}</option>`).join('');
           const companyOpts = [...companyTable.querySelectorAll('tr')]
             .map(r=>{ if(!r.id) r.id='company-'+Math.random().toString(36).slice(2,9); return `<option value="company:${r.id}">${r.children[0].textContent.trim()}</option>`; }).join('');
           modalClient.innerHTML = `<option value="">Unassigned</option><optgroup label="Clients">${clientOpts}</optgroup><optgroup label="Companies">${companyOpts}</optgroup>`;
-          modalClient.value = t && t.clientId ? `client:${t.clientId}` : t && t.companyId ? `company:${t.companyId}` : '';
+          let clientVal='';
+          if(source==='kanban'){
+            const teamOpts = teamMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+            modalTeam.innerHTML = `<option value="">Unassigned</option>${teamOpts}`;
+            modalTeam.value = t ? t.teamId : '';
+            modalTeamLabel.style.display = modalTeam.style.display = '';
+            clientVal = t && t.clientId ? `client:${t.clientId}` : t && t.companyId ? `company:${t.companyId}` : '';
+          }else{
+            modalTeamLabel.style.display = modalTeam.style.display = 'none';
+            const d = dailyTasks.find(x=>x.id===id);
+            clientVal = d && d.clientId ? `client:${d.clientId}` : d && d.companyId ? `company:${d.companyId}` : '';
+          }
+          modalClient.value = clientVal;
           modalClientLabel.style.display = modalClient.style.display = '';
           updateModalContactFromSelect();
+          if(article){ modalContact.innerHTML += `${modalContact.innerHTML?'<br/>':''}<a href="${article}" target="_blank">Wellness article</a>`; }
         }else{
           modalTitle.disabled = true;
           modalTeamLabel.style.display = modalTeam.style.display = 'none';
@@ -1812,9 +1937,40 @@
 
     const dailyListEl = document.getElementById('daily-list');
     if(dailyListEl){
-      dailyListEl.addEventListener('click',e=>{
+      let dragging=null;
+      function getAfterElement(container,y){
+        const els=[...container.querySelectorAll('.task:not(.dragging)')];
+        return els.reduce((closest,child)=>{
+          const box=child.getBoundingClientRect();
+          const offset=y-box.top-box.height/2;
+          if(offset<0 && offset>closest.offset){ return {offset, element:child}; }
+          else return closest;
+        },{offset:-Infinity}).element;
+      }
+      dailyListEl.addEventListener('dragstart',e=>{
+        const t=e.target.closest('.task');
+        if(!t) return;
+        dragging=t; t.classList.add('dragging');
+        e.dataTransfer.effectAllowed='move';
+      });
+      dailyListEl.addEventListener('dragend',()=>{
+        if(!dragging) return;
+        dragging.classList.remove('dragging');
+        const order=[...dailyListEl.querySelectorAll('.task')].map(el=>Number(el.dataset.id));
+        dailyTasks.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
+        saveDaily(); renderDaily();
+        dragging=null;
+      });
+      dailyListEl.addEventListener('dragover',e=>{
+        e.preventDefault();
+        const after=getAfterElement(dailyListEl,e.clientY);
+        if(!dragging) return;
+        if(after==null){ dailyListEl.appendChild(dragging); }
+        else{ dailyListEl.insertBefore(dragging,after); }
+      });
+      dailyListEl.addEventListener('dblclick',e=>{
         if(e.target.closest('.checkbox')||e.target.tagName==='A') return;
-        const taskEl = e.target.closest('.task');
+        const taskEl=e.target.closest('.task');
         if(taskEl) openTaskDetails(taskEl);
       });
     }
@@ -1916,11 +2072,12 @@
         tr.tabIndex=0;
         tr.dataset.clientId=clientId;
         tr.dataset.companyId=companyId;
-        tr.innerHTML=`<td contenteditable>${name}</td><td><select class="input project-client"></select></td><td><select class="input project-company"></select></td><td contenteditable>${owner}</td><td contenteditable>${status}</td><td contenteditable>${due}</td><td><button class="btn link remove-project">Remove</button></td>`;
+        tr.innerHTML=`<td>${name}</td><td><select class="input project-client"></select></td><td><select class="input project-company"></select></td><td>${owner}</td><td>${status}</td><td>${due}</td><td><button class="btn link remove-project">Remove</button></td>`;
         projectTableBody.appendChild(tr);
         populateProjectSelects();
         tr.querySelector('.project-client').value=clientId;
         tr.querySelector('.project-company').value=companyId;
+        openProjectModal(tr);
         ['new-project-name','new-project-owner','new-project-status','new-project-due'].forEach(id=>document.getElementById(id).value='');
         clientSel.value='';
         companySel.value='';
@@ -1934,12 +2091,12 @@
             delete projectData[row.dataset.key];
             row.remove();
           }
-          return;
         }
       });
       projectTableBody.addEventListener('dblclick',e=>{
+        if(e.target.classList.contains('remove-project')||e.target.closest('select')) return;
         const row=e.target.closest('tr[data-key]');
-        if(row){openProjectModal(row);}
+        if(row){ openProjectModal(row); }
       });
       projectTableBody.addEventListener('keydown',e=>{
         if(e.key==='Enter'){
@@ -1999,7 +2156,16 @@
     const doneBtn = document.getElementById('done-day');
     const overlay = document.getElementById('overlay-done');
     const closeDone = document.getElementById('close-done');
-    if(doneBtn){ doneBtn.addEventListener('click', ()=> overlay.classList.remove('hidden')); }
+    if(doneBtn){
+      doneBtn.addEventListener('click', ()=>{
+        const win = prompt("What's one win today?");
+        const stop = prompt("Did you stop at a reasonable time?");
+        const reflections = JSON.parse(localStorage.getItem('daily-reflections')||'[]');
+        reflections.push({date: todayStr, win, stop});
+        localStorage.setItem('daily-reflections', JSON.stringify(reflections));
+        overlay.classList.remove('hidden');
+      });
+    }
     if(closeDone){ closeDone.addEventListener('click', ()=> overlay.classList.add('hidden')); }
   </script>
 
