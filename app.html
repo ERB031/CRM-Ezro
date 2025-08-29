@@ -1239,7 +1239,7 @@
             const name=row?row.children[0].textContent.trim():'';
             contactHTML=name?`<div class="mini"><a href="#page-crm" class="crm-link" data-target="${t.companyId}" data-tab="crm-companies">Company: ${name}</a></div>`:'';
           }
-          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div class="task-title">${t.title}</div></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${contactHTML}${linkHTML}`;
+          div.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><div class="checkbox ${t.checked?'checked':''}" data-check></div><div class="task-title" style="flex:1">${t.title}</div><button class="btn link remove-daily" aria-label="Remove task">✕</button></div><div class="mini">Due: <input type="date" class="task-due" value="${t.due||todayStr}" /></div>${contactHTML}${linkHTML}`;
           dailyList.appendChild(div);
         });
         updateDashboardTasks();
@@ -1355,7 +1355,7 @@
       }, true);
       document.addEventListener('click', (e)=>{
         const box = e.target.closest('.checkbox');
-        if(!box) return;
+        if(!box || box.closest('#daily-list')) return;
         const taskEl = box.closest('.task');
         const id = Number(taskEl.dataset.id);
         const task = tasks.find(t=>t.id===id);
@@ -1937,6 +1937,18 @@
 
     const dailyListEl = document.getElementById('daily-list');
     if(dailyListEl){
+      dailyListEl.addEventListener('click',e=>{
+        const taskEl=e.target.closest('.task');
+        if(!taskEl) return;
+        const id=Number(taskEl.dataset.id);
+        if(e.target.closest('.checkbox')){
+          const d=dailyTasks.find(t=>t.id===id);
+          if(d){ d.checked=!d.checked; saveDaily(); renderDaily(); }
+        }else if(e.target.classList.contains('remove-daily')){
+          dailyTasks=dailyTasks.filter(t=>t.id!==id);
+          saveDaily(); renderDaily();
+        }
+      });
       let dragging=null;
       function getAfterElement(container,y){
         const els=[...container.querySelectorAll('.task:not(.dragging)')];
@@ -2024,13 +2036,13 @@
     let currentProjectKey='';
     function openProjectModal(row){
       const cells=[...row.children];
-      projectTitle.textContent=cells[0].textContent.trim();
-      projectOwner.textContent=cells[3].textContent.trim();
-      projectStatus.textContent=cells[4].textContent.trim();
-      projectDue.textContent=cells[5].textContent.trim();
       currentProjectKey=row.dataset.key;
-      renderProjectLists();
-      projectModal.classList.remove('hidden');
+      const data=projectData[currentProjectKey]||{tasks:{todo:[],progress:[],done:[]}};
+      const win=window.open('','_blank','width=800,height=600');
+      if(!win) return;
+      const renderCol=(arr,label)=>`<div class="column"><h4>${label}</h4>${arr.map(t=>`<div class=\"task\">${t.title}</div>`).join('')||'<div class=\"muted\">None</div>'}</div>`;
+      win.document.write(`<!DOCTYPE html><html lang="en"><head><title>${cells[0].textContent.trim()}</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;padding:20px;} .kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;} .column{background:#f6f3ff;border:1px dashed #e8e3f7;border-radius:12px;padding:10px;min-width:200px;} .column h4{margin:0 0 8px 0;} .task{background:#fff;border:1px solid #e8e3f7;border-radius:12px;padding:8px;margin-bottom:8px;} .muted{color:#6b6280;font-style:italic}</style></head><body><h3>${cells[0].textContent.trim()}</h3><p class="mini">Owner: ${cells[3].textContent.trim()} • Status: ${cells[4].textContent.trim()} • Due: ${cells[5].textContent.trim()}</p><div class="kanban">${renderCol(data.tasks.todo,'Need to complete')}${renderCol(data.tasks.progress,'In progress')}${renderCol(data.tasks.done,'Completed')}</div></body></html>`);
+      win.document.close();
     }
 
     function renderProjectLists(){
